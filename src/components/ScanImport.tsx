@@ -82,6 +82,8 @@ export function ScanImport({
         </div>
         <p className="mt-2 text-xs text-slate-400">
           Leave the PowerShell window open while you walk around. Stop it with Ctrl+C when done.
+          Or just run <b>start.bat</b> in the project folder — it starts this loop, the dev server
+          and live mode in one go.
         </p>
       </div>
 
@@ -94,8 +96,17 @@ export function ScanImport({
           <div>
             <h2 className="text-sm font-semibold text-slate-900">2 · Watch the file — live mode</h2>
             <p className="mt-0.5 text-xs text-slate-600">
-              Pick the <b>scan.txt</b> the loop is writing. FloorScope re-reads it the moment it
-              changes and updates the dashboard automatically.
+              {live.auto ? (
+                <>
+                  Started by <b>start.bat</b> — FloorScope reads <b>scan.txt</b> straight from the
+                  dev server and updates the dashboard the moment the loop writes a new scan.
+                </>
+              ) : (
+                <>
+                  Pick the <b>scan.txt</b> the loop is writing. FloorScope re-reads it the moment it
+                  changes and updates the dashboard automatically.
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -110,7 +121,11 @@ export function ScanImport({
               )}
             >
               {live.watching ? <Square className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
-              {live.watching ? "Stop watching" : "Pick scan.txt & go live"}
+              {live.watching
+                ? "Stop watching"
+                : live.auto
+                  ? "Restart live watch"
+                  : "Pick scan.txt & go live"}
             </button>
 
             {live.watching && (

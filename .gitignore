@@ -141,3 +141,9 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# FloorScope runtime scan captured by the start.bat loop
+/scan.txt
+
+# FloorScope: port published by the dev server for start.bat
+/.floorscope-port
