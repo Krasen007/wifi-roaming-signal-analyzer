@@ -354,7 +354,6 @@ export function Dashboard({
 
       <DevicesPanel
         devices={devices}
-        registry={registry}
         connectedBssid={connectedBssid}
         activeSsid={activeSsid}
       />

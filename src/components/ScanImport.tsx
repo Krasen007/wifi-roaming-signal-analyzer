@@ -11,7 +11,6 @@ import {
   Info,
 } from "lucide-react";
 import { parseScan, type ConnectedInfo } from "../lib/parsers";
-import { SAMPLE_NETSH } from "../lib/sample";
 import type { AccessPoint } from "../lib/types";
 import { cn } from "../utils/cn";
 import type { LiveWatch } from "../lib/useLiveWatch";
@@ -179,26 +178,18 @@ export function ScanImport({
           if (f) void dropFile(f);
         }}
       >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="rounded-lg bg-slate-100 p-2 text-slate-500">
-              <Upload className="h-4 w-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900">Or paste once / drop scan.txt</h2>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Drop the file anywhere on this card, or paste{" "}
-                <code className="rounded bg-slate-100 px-1">netsh wlan show networks mode=bssid</code>{" "}
-                output below.
-              </p>
-            </div>
+        <div className="flex items-center gap-2.5">
+          <div className="rounded-lg bg-slate-100 p-2 text-slate-500">
+            <Upload className="h-4 w-4" />
           </div>
-          <button
-            onClick={() => setText(SAMPLE_NETSH)}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
-          >
-            Load sample data
-          </button>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Or paste once / drop scan.txt</h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Drop the file anywhere on this card, or paste{" "}
+              <code className="rounded bg-slate-100 px-1">netsh wlan show networks mode=bssid</code>{" "}
+              output below.
+            </p>
+          </div>
         </div>
         <textarea
           value={text}

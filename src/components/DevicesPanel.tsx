@@ -1,4 +1,3 @@
-import type { Registry } from "../lib/types";
 import type { DeviceGroup } from "../lib/devices";
 import { SignalBars } from "./SignalBars";
 import { BandTag } from "./BandTag";
@@ -7,16 +6,13 @@ import { cn } from "../utils/cn";
 
 export function DevicesPanel({
   devices,
-  registry,
   connectedBssid,
   activeSsid,
 }: {
   devices: DeviceGroup[];
-  registry: Registry;
   connectedBssid: string;
   activeSsid: string;
 }) {
-  void registry;
   const multi = devices.filter((d) => d.members.length > 1);
   if (devices.length === 0) return null;
 
@@ -38,9 +34,8 @@ export function DevicesPanel({
         </div>
       </div>
 
-      {multi.length > 0 && (
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {multi.map((dev) => (
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {devices.map((dev) => (
             <div
               key={dev.key}
               className={cn(
@@ -103,8 +98,7 @@ export function DevicesPanel({
               </p>
             </div>
           ))}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

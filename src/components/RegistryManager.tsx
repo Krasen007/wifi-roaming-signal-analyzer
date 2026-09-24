@@ -33,7 +33,7 @@ export function RegistryManager({
     const prev = registry[bssid] ?? { bssid, building: "", floor: "", name: "" };
     const next: RegistryEntry = { ...prev, ...patch, bssid };
     const r = { ...registry, [bssid]: next };
-    if (!next.building && !next.floor && !next.name && !next.note) delete r[bssid];
+    if (!next.building && !next.floor && !next.name) delete r[bssid];
     onChange(r);
   };
 
@@ -52,11 +52,6 @@ export function RegistryManager({
       e.floor && floors.add(e.floor);
       e.building && buildings.add(e.building);
     });
-    if (floors.size === 0)
-      ["Basement", "Ground floor", "1st floor", "2nd floor", "3rd floor", "Attic"].forEach((f) =>
-        floors.add(f)
-      );
-    if (buildings.size === 0) ["HQ", "Branch office A", "Branch office B"].forEach((b) => buildings.add(b));
     return { floorSuggestions: Array.from(floors), buildingSuggestions: Array.from(buildings) };
   }, [registry]);
 

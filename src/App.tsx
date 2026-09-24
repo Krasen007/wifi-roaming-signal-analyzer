@@ -18,11 +18,9 @@ import {
 import { ScanImport } from "./components/ScanImport";
 import { Dashboard } from "./components/Dashboard";
 import { RegistryManager } from "./components/RegistryManager";
-import { ChannelChart } from "./components/ChannelChart";
-import { BarChart3 } from "lucide-react";
 import { cn } from "./utils/cn";
 
-type Tab = "dashboard" | "import" | "registry" | "channels";
+type Tab = "dashboard" | "import" | "registry";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("import");
@@ -163,7 +161,6 @@ export default function App() {
     { id: "dashboard", label: "Dashboard" },
     { id: "import", label: "Live setup", badge: aps.length || undefined },
     { id: "registry", label: "AP Registry", badge: registeredCount || undefined },
-    { id: "channels", label: "Channels" },
   ];
 
   return (
@@ -259,24 +256,6 @@ export default function App() {
         {tab === "registry" && (
           <RegistryManager aps={aps} registry={registry} onChange={updateRegistry} />
         )}
-        {tab === "channels" &&
-          (aps.length > 0 ? (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 text-xs leading-relaxed text-slate-500 shadow-sm">
-                Use this when placing or re-configuring APs: pick channels with the fewest neighbors
-                on the same floor to reduce co-channel interference.
-              </div>
-              <ChannelChart aps={aps} />
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <BarChart3 className="mx-auto h-10 w-10 text-slate-300" />
-              <h3 className="mt-3 text-base font-semibold text-slate-800">No scan data yet</h3>
-              <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
-                Load a scan via <b>Live setup</b> to see channel congestion per band.
-              </p>
-            </div>
-          ))}
       </main>
 
       <footer className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-slate-400">

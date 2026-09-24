@@ -17,7 +17,6 @@ export interface RegistryEntry {
   building: string; // free label e.g. "HQ", "Branch office"
   floor: string; // free label e.g. "Ground", "1st", "2nd"
   name: string; // friendly AP name e.g. "Living room AP"
-  note?: string;
 }
 
 export type Registry = Record<string, RegistryEntry>;
