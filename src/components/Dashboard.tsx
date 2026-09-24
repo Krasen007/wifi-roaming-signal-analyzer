@@ -60,6 +60,7 @@ export function Dashboard({
   const ssids = useMemo(() => Array.from(new Set(aps.map((a) => a.ssid))).sort(), [aps]);
   const defaultSsid = aps[0]?.ssid ?? "";
   const [ssid, setSsid] = useState(defaultSsid);
+  const [chartAllWifi, setChartAllWifi] = useState(false);
   const activeSsid = ssids.includes(ssid) ? ssid : defaultSsid;
 
   const myAps = useMemo(
@@ -135,6 +136,24 @@ export function Dashboard({
             onChange={(e) => setSsid(e.target.value)}
             className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
           >
+            {ssids.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="chart-network" className="text-xs font-medium text-slate-500">
+            Chart
+          </label>
+          <select
+            id="chart-network"
+            value={chartAllWifi ? "__all__" : activeSsid}
+            onChange={(e) => setChartAllWifi(e.target.value === "__all__")}
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+          >
+            <option value="__all__">All detected Wi‑Fi</option>
             {ssids.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -346,7 +365,7 @@ export function Dashboard({
 
       <LiveHistoryChart
         history={history}
-        match={(bssid) => (lastSeenSsid[bssid] ?? "") === activeSsid}
+        match={(bssid) => chartAllWifi || (lastSeenSsid[bssid] ?? "") === activeSsid}
         connectedBssid={connectedBssid}
         registry={registry}
         bandOf={bandOf}

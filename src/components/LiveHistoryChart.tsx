@@ -74,8 +74,7 @@ export function LiveHistoryChart({
         segments: splitSegments(sliced),
       };
     })
-    .sort((a, b) => (b.lastReal?.dbm ?? -999) - (a.lastReal?.dbm ?? -999))
-    .slice(0, 6);
+    .sort((a, b) => (b.lastReal?.dbm ?? -999) - (a.lastReal?.dbm ?? -999));
 
   if (series.length === 0) return null;
 
