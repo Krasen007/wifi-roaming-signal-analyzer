@@ -71,7 +71,6 @@ echo   file by itself - no file picker needed. Keep both windows open
 echo   while you walk around; a new scan shows up every ~5 seconds.
 echo ==========================================================
 echo.
-pause
 exit /b 0
 
 :server_timeout
