@@ -1,12 +1,10 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { IncomingMessage, Server as HttpServer, ServerResponse } from "node:http";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, type Plugin, type ViteDevServer } from "vite";
-
-type HttpServer = ViteDevServer["httpServer"];
+import { defineConfig, type Plugin } from "vite";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

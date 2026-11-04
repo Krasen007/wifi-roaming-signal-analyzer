@@ -2,7 +2,6 @@ import { CircleCheck, MoveRight, Search, TriangleAlert, Zap } from "lucide-react
 import type { AccessPoint, LiveMeta, Registry, RoamEvent } from "../lib/types";
 import { apDisplayName, bssidDisplayName, locationLabel } from "../lib/labels";
 import { ROAM_DELTA_THRESHOLD_DBM } from "../lib/signal";
-import { cn } from "../utils/cn";
 
 export interface RoamPanelProps {
   connected?: AccessPoint;
@@ -58,9 +57,6 @@ export function RoamPanel({
       connectedFloor !== currentFloor.trim()
   );
 
-  const isBestAp = Boolean(connected && strongest && connected.bssid === strongest.bssid);
-  const hasLocationMismatch = wrongBuilding || wrongFloor;
-
   const userWhere = [currentBuilding.trim(), currentFloor.trim()].filter(Boolean).join(" · ");
 
   return (
@@ -87,41 +83,12 @@ export function RoamPanel({
             </p>
           </div>
         ) : connected ? (
-          <div
-            className={cn(
-              "rounded-xl border p-3",
-              isBestAp
-                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : "border-slate-200 bg-slate-50 text-slate-800"
-            )}
-          >
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-900">
             <p className="flex items-center gap-1.5 font-semibold">
-              <CircleCheck className="h-4 w-4" />{" "}
-              {isBestAp ? "Connected to the best AP" : "Signal is acceptable"}
+              <CircleCheck className="h-4 w-4" /> Connected to the best AP
             </p>
             <p className="mt-1 text-xs leading-relaxed">
-              {isBestAp ? (
-                hasLocationMismatch ? (
-                  <>
-                    You're on <b>{connectedLoc ?? "the strongest AP"}</b>, but check your floor
-                    assignment below.
-                  </>
-                ) : (
-                  <>
-                    You're on <b>{connectedLoc ?? "the strongest AP"}</b> — no action needed.
-                  </>
-                )
-              ) : hasLocationMismatch ? (
-                <>
-                  You're on <b>{connectedLoc ?? "an acceptable AP"}</b> at {connected.dbm} dBm, but
-                  check your floor assignment below.
-                </>
-              ) : (
-                <>
-                  You're on <b>{connectedLoc ?? "an acceptable AP"}</b> at {connected.dbm} dBm —
-                  within normal roaming margins.
-                </>
-              )}
+              You're on <b>{connectedLoc ?? "the strongest AP"}</b> — no action needed.
             </p>
           </div>
         ) : (
@@ -210,3 +177,4 @@ export function RoamPanel({
     </div>
   );
 }
+

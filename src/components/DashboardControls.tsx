@@ -55,12 +55,16 @@ export function DashboardControls({
         </label>
         <select
           id="chart-network"
-          value={chartAllWifi ? "__all__" : "__active__"}
+          value={chartAllWifi ? "__all__" : activeSsid}
           onChange={(e) => onSelectChartScope(e.target.value === "__all__")}
           className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
         >
           <option value="__all__">All detected Wi‑Fi</option>
-          <option value="__active__">Active network</option>
+          {ssids.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -75,7 +79,8 @@ export function DashboardControls({
           onChange={(e) => onChangeBuilding(e.target.value)}
           placeholder="e.g. HQ"
           className="w-32 rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
-        />
+        >
+        </input>
         <datalist id="dash-buildings">
           {buildings.map((b) => (
             <option key={b} value={b} />
@@ -125,3 +130,4 @@ export function DashboardControls({
     </div>
   );
 }
+

@@ -53,7 +53,7 @@ export function AllApsList({
           }
           const devIdx = devNumber.get(a.bssid);
           const hasMultipleMembers =
-            devIdx != null && (devices[devIdx - 1]?.members.length ?? 0) > 1;
+            devIdx != null && devices[(devIdx ?? 1) - 1]?.members.length > 1;
 
           return (
             <div
@@ -138,3 +138,4 @@ function Trend({ delta }: { delta: number }) {
     </span>
   );
 }
+

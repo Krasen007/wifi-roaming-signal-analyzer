@@ -1,5 +1,4 @@
 import type { Registry } from "./types";
-import { normalizeBssid } from "./signal";
 
 const KEY = "floorscope.registry.v1";
 const CUR_FLOOR = "floorscope.currentFloor.v1";
@@ -7,54 +6,36 @@ const CONNECTED = "floorscope.connectedBssid.v1";
 
 type StoredEntry = Partial<Registry[string]> & { name?: string };
 
-const BSSID_REGEX = /^([0-9a-f]{2}:){5}[0-9a-f]{2}$/;
-
-export function sanitizeRegistry(data: unknown): Registry {
-  if (!data || typeof data !== "object") return {};
-  const registry: Registry = {};
-
-  const entries: [string, StoredEntry][] = Array.isArray(data)
-    ? data.map((item) => [item?.bssid ?? "", item])
-    : Object.entries(data as Record<string, StoredEntry>);
-
-  for (const [key, entry] of entries) {
-    if (!entry || typeof entry !== "object") continue;
-    const rawBssid = typeof entry.bssid === "string" && entry.bssid ? entry.bssid : key;
-    const bssid = normalizeBssid(rawBssid);
-    if (!BSSID_REGEX.test(bssid)) continue;
-
-    const location =
-      typeof entry.location === "string"
-        ? entry.location.trim()
-        : typeof entry.name === "string"
-          ? entry.name.trim()
-          : "";
-    const building = typeof entry.building === "string" ? entry.building.trim() : "";
-    const floor = typeof entry.floor === "string" ? entry.floor.trim() : "";
-
-    if (building || floor || location) {
-      registry[bssid] = { bssid, building, floor, location };
-    }
-  }
-
-  return registry;
-}
-
-export function parseRegistryJson(jsonStr: string): Registry {
-  const parsed = JSON.parse(jsonStr);
-  return sanitizeRegistry(parsed);
-}
-
-export function serializeRegistryJson(registry: Registry): string {
-  return JSON.stringify(registry, null, 2);
-}
-
 export function loadRegistry(): Registry {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return sanitizeRegistry(parsed);
+
+    const parsed = JSON.parse(raw) as Record<string, StoredEntry>;
+    const registry: Registry = {};
+    let needsMigration = false;
+
+    for (const [bssid, entry] of Object.entries(parsed)) {
+      if (!entry || typeof entry !== "object") continue;
+
+      // v1 stored the location in `name`; migrate it to `location`.
+      if (!("location" in entry) && typeof entry.name === "string") needsMigration = true;
+      const location =
+        typeof entry.location === "string"
+          ? entry.location
+          : typeof entry.name === "string"
+            ? entry.name
+            : "";
+      const building = typeof entry.building === "string" ? entry.building : "";
+      const floor = typeof entry.floor === "string" ? entry.floor : "";
+
+      if (building || floor || location) {
+        registry[bssid] = { bssid, building, floor, location };
+      }
+    }
+
+    if (needsMigration) saveRegistry(registry);
+    return registry;
   } catch {
     return {};
   }
