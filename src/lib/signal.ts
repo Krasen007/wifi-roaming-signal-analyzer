@@ -22,14 +22,34 @@ export interface Quality {
   ring: string;
 }
 
+/**
+ * Calibration thresholds aligned with enterprise Wi-Fi 6/6E/7 deployments:
+ * - Excellent (>= -55 dBm): Max MCS rates (1024-QAM / 4096-QAM), voice/video/VR readiness.
+ * - Good (>= -65 dBm): Enterprise cell edge design goal (Cisco/Aruba standard for real-time traffic).
+ * - Fair (>= -72 dBm): Typical client roam scan trigger boundary (Apple iOS triggers at -70 dBm, Android at -70 to -73 dBm).
+ * - Weak (>= -80 dBm): Cell edge, high retry rate, throughput degradation.
+ * - Poor (< -80 dBm): Drop-out threshold.
+ */
+export const SIGNAL_TIER_EXCELLENT = -55;
+export const SIGNAL_TIER_GOOD = -65;
+export const SIGNAL_TIER_FAIR = -72;
+export const SIGNAL_TIER_WEAK = -80;
+
+/**
+ * Standard enterprise roam delta hysteresis threshold in dBm.
+ * Apple iOS, Cisco, and Aruba require a candidate AP to be at least 8 dBm stronger
+ * than the current AP before triggering a roam, preventing ping-pong flapping.
+ */
+export const ROAM_DELTA_THRESHOLD_DBM = 8;
+
 export function quality(dbm: number): Quality {
-  if (dbm >= -55)
+  if (dbm >= SIGNAL_TIER_EXCELLENT)
     return { label: "Excellent", tier: 4, color: "text-emerald-600", bg: "bg-emerald-500", ring: "ring-emerald-500/30" };
-  if (dbm >= -65)
+  if (dbm >= SIGNAL_TIER_GOOD)
     return { label: "Good", tier: 3, color: "text-lime-600", bg: "bg-lime-500", ring: "ring-lime-500/30" };
-  if (dbm >= -72)
+  if (dbm >= SIGNAL_TIER_FAIR)
     return { label: "Fair", tier: 2, color: "text-amber-600", bg: "bg-amber-500", ring: "ring-amber-500/30" };
-  if (dbm >= -80)
+  if (dbm >= SIGNAL_TIER_WEAK)
     return { label: "Weak", tier: 1, color: "text-orange-600", bg: "bg-orange-500", ring: "ring-orange-500/30" };
   return { label: "Poor", tier: 0, color: "text-rose-600", bg: "bg-rose-500", ring: "ring-rose-500/30" };
 }

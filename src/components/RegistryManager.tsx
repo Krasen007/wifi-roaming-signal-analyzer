@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronUp, ChevronsUpDown, Download, Upload } from "lucide-react";
 import type { AccessPoint, Registry, RegistryEntry } from "../lib/types";
+import { parseRegistryJson, serializeRegistryJson } from "../lib/storage";
 import { BandTag } from "./BandTag";
 import { SignalBars } from "./SignalBars";
 import { cn } from "../utils/cn";
@@ -44,6 +45,8 @@ export function RegistryManager({
 }) {
   const [manualBssid, setManualBssid] = useState("");
   const [sort, setSort] = useState<SortState>({ key: "signal", dir: "desc" });
+  const [importStatus, setImportStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSort = (key: SortKey) => {
     setSort((prev) =>
@@ -119,6 +122,46 @@ export function RegistryManager({
     }
   };
 
+  const handleExport = () => {
+    const json = serializeRegistryJson(registry);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "floorscope-registry.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const imported = parseRegistryJson(text);
+      const count = Object.keys(imported).length;
+      if (count === 0) {
+        setImportStatus({
+          type: "error",
+          text: "No valid AP mappings found in JSON file. Expected valid BSSID MAC addresses.",
+        });
+      } else {
+        onChange({ ...registry, ...imported });
+        setImportStatus({
+          type: "success",
+          text: `Imported ${count} AP mapping${count === 1 ? "" : "s"} successfully.`,
+        });
+      }
+    } catch {
+      setImportStatus({
+        type: "error",
+        text: "Could not parse JSON file. Please check file format.",
+      });
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 text-sm text-indigo-900">
@@ -128,6 +171,61 @@ export function RegistryManager({
         whatever names fit your buildings ("HQ", "Warehouse", "Mezzanine", "Floor 7"…). Tip: stand
         next to each AP, run a scan, and the strongest BSSID is that AP.
       </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="text-xs text-slate-500">
+          <span className="font-semibold text-slate-700">{Object.keys(registry).length}</span> AP
+          {Object.keys(registry).length === 1 ? "" : "s"} mapped in registry
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImportFile}
+            accept=".json,application/json"
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+            title="Import registry mappings from a JSON file"
+          >
+            <Upload className="h-3.5 w-3.5 text-slate-500" />
+            Import JSON
+          </button>
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={Object.keys(registry).length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Export mapped registry to a JSON file"
+          >
+            <Download className="h-3.5 w-3.5 text-slate-500" />
+            Export JSON
+          </button>
+        </div>
+      </div>
+
+      {importStatus && (
+        <div
+          className={cn(
+            "flex items-center justify-between rounded-xl px-3.5 py-2 text-xs",
+            importStatus.type === "success"
+              ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border border-rose-200 bg-rose-50 text-rose-800"
+          )}
+        >
+          <span>{importStatus.text}</span>
+          <button
+            type="button"
+            onClick={() => setImportStatus(null)}
+            className="ml-2 font-bold opacity-60 hover:opacity-100"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <datalist id="floor-suggestions">
         {floorSuggestions.map((f) => (

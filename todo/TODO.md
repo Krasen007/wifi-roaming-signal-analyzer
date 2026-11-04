@@ -21,9 +21,9 @@ A deep-dive audit of the current codebase reveals both successfully implemented 
 - **DevicesPanel Modernized:** Shows all nearby hardware units (not just multi-SSID radios), highlighting devices sharing physical hardware (D-numbers). Dead `registry` prop and `void registry;` statements have been eradicated.
 
 ### 1.2 Discrepancies & Unfinished Items (Found in Codebase Audit)
-1. **Unsplit Dashboard God Component:** Prior documentation claimed `Dashboard.tsx` had been decomposed into `DashboardControls.tsx`, `AllApsList.tsx`, and `OtherNetworks.tsx` (~87 lines). **In reality, `Dashboard.tsx` is still an undivided 514-line monolithic component** implementing controls, hero verdict, roam logging, chart embedding, device list, same-network ranking, and other network lists in a single file.
-2. **Orphaned Dead Component:** `src/components/ChannelChart.tsx` is still present on disk despite being unreferenced by any component or route.
-3. **Over-Engineered Chart (Deferred):** `LiveHistoryChart.tsx` remains ~307 lines with complex SVG gap connectors, focus modes, and color palette hashing.
+1. **Unsplit Dashboard God Component:** Prior documentation claimed `Dashboard.tsx` had been decomposed into `DashboardControls.tsx`, `AllApsList.tsx`, and `OtherNetworks.tsx` (~87 lines). `Dashboard.tsx` has now been decomposed into isolated modular components.
+2. **Orphaned Dead Component:** `src/components/ChannelChart.tsx` was present on disk despite being unreferenced by any component or route (now removed).
+3. **Over-Engineered Chart (Deferred):** `LiveHistoryChart.tsx` simplified to clean solid trend lines without gap links or focus toggles.
 
 ---
 
@@ -39,7 +39,7 @@ A deep-dive audit of the current codebase reveals both successfully implemented 
 ### 2.2 Taste Weaknesses & Anti-Pattern Risks
 1. **The Feature Factory Temptation:** Prior additions (such as the Channels tab and sample data) added UI noise and cognitive overhead without answering the primary question: *"Which floor am I on, and am I attached to the right AP?"*
 2. **God Component Density:** `Dashboard.tsx` handles multiple independent domains: network selection, building/floor inputs, hero scorecards, roaming logic, roam history lists, ranking, and neighbor networks.
-3. **Dead Weight in Repository:** Unreferenced components (`ChannelChart.tsx`) create cognitive drag and maintenance ambiguity.
+3. **Dead Weight in Repository:** Unreferenced components (`ChannelChart.tsx`) created cognitive drag and maintenance ambiguity (resolved by removal).
 
 ---
 
@@ -66,8 +66,8 @@ Before adding or modifying any feature, abstraction, or dependency, apply this c
 ## 4. Master Consolidated Roadmap
 
 ### Phase 1: High Priority (Immediate Cleanup)
-- [ ] **Delete Orphaned Component:** Remove unreferenced `src/components/ChannelChart.tsx`.
-- [ ] **Decompose `Dashboard.tsx`:** Extract the 514-line monolithic component into clear, isolated units:
+- [x] **Delete Orphaned Component:** Remove unreferenced `src/components/ChannelChart.tsx`.
+- [x] **Decompose `Dashboard.tsx`:** Extract the 514-line monolithic component into clear, isolated units:
   - `DashboardControls.tsx`: SSID selection, current building/floor input fields, and live status badge.
   - `SignalHero.tsx`: Best AP card, signal strength, and dBm status.
   - `RoamPanel.tsx`: Sticky-client alerts, wrong floor/building alerts, connection selector, and roam event log.
@@ -75,14 +75,14 @@ Before adding or modifying any feature, abstraction, or dependency, apply this c
   - `OtherNetworks.tsx`: Collapsed/compact view of adjacent SSIDs.
 
 ### Phase 2: Medium Priority (Chart Calibration)
-- [ ] **Simplify `LiveHistoryChart.tsx`:**
+- [x] **Simplify `LiveHistoryChart.tsx`:**
   - Strip focus-mode toggles and complex gap link rendering if they cause visual clutter.
   - Maintain solid trend lines, connected AP ring indicator, and roam event tick marks.
   - Target: reduce file from ~307 lines to ~120-150 clean lines.
 
 ### Phase 3: Low Priority & Maintenance
-- [ ] **Registry Export/Import:** Provide simple JSON export and import for transferring mapped AP registries between devices without backend infrastructure.
-- [ ] **Calibration Verification:** Review signal tiers (-55, -65, -72, -80 dBm) and roam delta threshold (8 dBm) against Wi-Fi 6/6E/7 enterprise deployments.
+- [x] **Registry Export/Import:** Provide simple JSON export and import for transferring mapped AP registries between devices without backend infrastructure.
+- [x] **Calibration Verification:** Review signal tiers (-55, -65, -72, -80 dBm) and roam delta threshold (8 dBm) against Wi-Fi 6/6E/7 enterprise deployments.
 
 ---
 
@@ -90,4 +90,3 @@ Before adding or modifying any feature, abstraction, or dependency, apply this c
 - ❌ **No Cloud Sync or Accounts:** FloorScope remains an offline-first browser tool running against local `scan.txt`.
 - ❌ **No Packet Sniffing / Monitor Mode:** Does not require specialized adapters or pcap drivers. Native `netsh` is the only requirement.
 - ❌ **No Dedicated Channel Congestion Tab:** Frequency details are surfaced directly on individual AP cards where relevant, avoiding dedicated network-planner views.
-

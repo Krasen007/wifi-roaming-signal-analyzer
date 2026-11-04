@@ -27,7 +27,7 @@ Operating systems only show the network name (SSID). FloorScope inspects the phy
 - **Physical Device Disambiguation:** Enterprise APs typically broadcast multiple SSIDs and bands across the same physical hardware, sharing middle BSSID octets (`xx:AA:BB:CC:DD:yy`). FloorScope groups these into unified hardware units (`D1`, `D2`, etc.), so you know how many distinct access points are actually nearby.
 - **Live Signal History Chart:** SVG-based timeline rendering up to 120 polling intervals with live dBm trajectories, connection indicators, and roam/drop event flags.
 - **Local AP Registry:** Map BSSIDs to specific buildings, floors, and descriptive room/hallway locations. Fields use dynamic autocomplete based on previously entered locations.
-- **Strict Privacy & Offline Execution:** 100% in-browser. All scan data and registry records remain entirely on your local machine (`localStorage`).
+- **Strict Privacy & Offline Execution:** Fully local-only operation. Scan data is written to an on-disk `scan.txt` file by the local scan loop, and AP registry mappings are stored in browser `localStorage`; no data leaves your machine.
 
 ---
 
@@ -90,7 +90,7 @@ FloorScope is organized into three focused tabs:
 ### 3. AP Registry
 - Comprehensive registry table mapping each detected or manually entered BSSID to a **Building**, **Floor**, and **Location**.
 - Sortable by signal, BSSID, SSID, building, floor, or location.
-- Stored permanently in browser `localStorage`.
+- Persisted in browser `localStorage` until cleared.
 
 ---
 
@@ -116,13 +116,18 @@ wifi-roaming-signal-analyzer/
 ├── src/
 │   ├── App.tsx                   # Main layout and tab navigation
 │   ├── components/
+│   │   ├── AllApsList.tsx        # Ranked list of same-SSID access points with signal trends
+│   │   ├── BandTag.tsx           # Frequency band badges (2.4G / 5G / 6G)
 │   │   ├── Dashboard.tsx         # Dashboard view (hero, roam check, AP ranking)
+│   │   ├── DashboardControls.tsx # Network selector, chart scope, and building/floor controls
 │   │   ├── DevicesPanel.tsx      # Physical hardware grouping (middle octet heuristic)
 │   │   ├── LiveHistoryChart.tsx  # SVG signal-over-time timeline
+│   │   ├── OtherNetworks.tsx     # Overview of adjacent SSIDs detected nearby
 │   │   ├── RegistryManager.tsx   # AP location registry table
+│   │   ├── RoamPanel.tsx         # Sticky client, wrong floor alerts, and roam event log
 │   │   ├── ScanImport.tsx        # Ingest controls, scan loop copy, paste/drop
 │   │   ├── SignalBars.tsx        # Signal visualizer bars
-│   │   └── BandTag.tsx           # Frequency band badges (2.4G / 5G / 6G)
+│   │   └── SignalHero.tsx        # Best AP card, signal strength, and dBm status
 │   ├── lib/
 │   │   ├── devices.ts            # Physical device grouping algorithm
 │   │   ├── labels.ts             # Display label formatters
@@ -142,4 +147,3 @@ wifi-roaming-signal-analyzer/
 ## License
 
 Private / Internal utility.
-

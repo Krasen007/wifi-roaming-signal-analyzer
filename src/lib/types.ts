@@ -38,3 +38,9 @@ export interface RoamEvent {
   from: string;
   to: string;
 }
+
+export interface LiveMeta {
+  watching: boolean;
+  fileName: string | null;
+  lastUpdate: number | null;
+}
