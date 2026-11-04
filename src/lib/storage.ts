@@ -4,10 +4,38 @@ const KEY = "floorscope.registry.v1";
 const CUR_FLOOR = "floorscope.currentFloor.v1";
 const CONNECTED = "floorscope.connectedBssid.v1";
 
+type StoredEntry = Partial<Registry[string]> & { name?: string };
+
 export function loadRegistry(): Registry {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as Registry) : {};
+    if (!raw) return {};
+
+    const parsed = JSON.parse(raw) as Record<string, StoredEntry>;
+    const registry: Registry = {};
+    let needsMigration = false;
+
+    for (const [bssid, entry] of Object.entries(parsed)) {
+      if (!entry || typeof entry !== "object") continue;
+
+      // v1 stored the location in `name`; migrate it to `location`.
+      if (!("location" in entry) && typeof entry.name === "string") needsMigration = true;
+      const location =
+        typeof entry.location === "string"
+          ? entry.location
+          : typeof entry.name === "string"
+            ? entry.name
+            : "";
+      const building = typeof entry.building === "string" ? entry.building : "";
+      const floor = typeof entry.floor === "string" ? entry.floor : "";
+
+      if (building || floor || location) {
+        registry[bssid] = { bssid, building, floor, location };
+      }
+    }
+
+    if (needsMigration) saveRegistry(registry);
+    return registry;
   } catch {
     return {};
   }

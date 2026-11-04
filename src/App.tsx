@@ -130,11 +130,11 @@ export default function App() {
     prevWatching.current = watching;
   }, [watching]);
 
-  // Detect roams: whenever the connected AP changes (auto- or manual), log it.
+  // Detect connection changes: roams (AP → AP) and drops (AP → nothing).
   const prevConnectedRef = useRef("");
   useEffect(() => {
     const prev = prevConnectedRef.current;
-    if (connectedBssid && prev && connectedBssid !== prev) {
+    if (prev && connectedBssid !== prev) {
       setRoams((r) => [{ t: Date.now(), from: prev, to: connectedBssid }, ...r].slice(0, 15));
     }
     prevConnectedRef.current = connectedBssid;
@@ -155,7 +155,7 @@ export default function App() {
     [updateConnected, recordScan]
   );
 
-  const registeredCount = Object.values(registry).filter((e) => e.floor || e.name).length;
+  const registeredCount = Object.values(registry).filter((e) => e.floor || e.location).length;
 
   const tabs: { id: Tab; label: string; badge?: number }[] = [
     { id: "dashboard", label: "Dashboard" },
@@ -252,9 +252,16 @@ export default function App() {
             roams={roams}
           />
         )}
-        {tab === "import" && <ScanImport onParsed={handleParsed} live={live} />}
+        {tab === "import" && (
+          <ScanImport onParsed={handleParsed} live={live} aps={aps} />
+        )}
         {tab === "registry" && (
-          <RegistryManager aps={aps} registry={registry} onChange={updateRegistry} />
+          <RegistryManager
+            aps={aps}
+            registry={registry}
+            connectedBssid={connectedBssid}
+            onChange={updateRegistry}
+          />
         )}
       </main>
 

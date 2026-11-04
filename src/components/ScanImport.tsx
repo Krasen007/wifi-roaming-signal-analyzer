@@ -21,9 +21,11 @@ const LOOP_CMD =
 export function ScanImport({
   onParsed,
   live,
+  aps,
 }: {
   onParsed: (aps: AccessPoint[], format: string, connected?: ConnectedInfo) => void;
   live: LiveWatch;
+  aps: AccessPoint[];
 }) {
   const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
@@ -53,6 +55,77 @@ export function ScanImport({
 
   return (
     <div className="space-y-6">
+      {/* OVERVIEW — what this tab does and what the numbers mean */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-start gap-2.5">
+          <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
+            <Info className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">What this tab is for</h2>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+              This tab is the <b>data source</b> for the dashboard — it controls how FloorScope
+              reads <b>scan.txt</b>. When you launch with <b>start.bat</b>, the scan loop and live
+              mode are already running, so you normally don&apos;t need to change anything here.
+              Open it only if live updates stop, or if you want to switch to manual mode.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <StatusItem
+            label="Mode"
+            value={live.auto ? "Automatic" : "Manual"}
+            hint={live.auto ? "started by start.bat" : "you pick the file"}
+          />
+          <StatusItem
+            label="Live updates"
+            value={live.watching ? "On" : "Off"}
+            hint={live.watching ? "reading scan.txt" : "not reading"}
+            tone={live.watching ? "good" : "muted"}
+          />
+          <StatusItem
+            label="APs in last scan"
+            value={String(aps.length)}
+            hint="unique BSSIDs"
+          />
+          <StatusItem
+            label="Last update"
+            value={live.lastUpdate ? new Date(live.lastUpdate).toLocaleTimeString() : "—"}
+            hint={live.lastUpdate ? "new scan received" : "waiting for a scan"}
+          />
+        </div>
+
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
+          <p className="font-semibold text-slate-700">What the numbers mean</p>
+          <ul className="mt-1 list-disc space-y-1 pl-4">
+            <li>
+              <b>{aps.length}</b> on the <b>Live setup</b> tab badge: unique access points in the
+              most recent scan (not the number of scans).
+            </li>
+            <li>
+              <b>Updated 14:32:05</b>: when a new scan was last read. If it stops changing, the
+              loop or dev server is not running.
+            </li>
+            <li>
+              <b>AP Registry</b> badge: how many BSSIDs you&apos;ve assigned a building, floor, or
+              location.
+            </li>
+            <li>
+              The loop writes a new scan every <b>5 s</b>; FloorScope checks for changes about every{" "}
+              <b>1.2 s</b>.
+            </li>
+          </ul>
+        </div>
+
+        {live.auto && live.watching && (
+          <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+            <Check className="h-3.5 w-3.5" /> All set — start.bat is feeding scans to the dashboard.
+            You can go back to Dashboard.
+          </p>
+        )}
+      </div>
+
       {/* STEP 1+2 — start the loop */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2.5">
@@ -219,7 +292,7 @@ function ImportFooter({ text, onImport }: { text: string; onImport: () => void }
       <div className="text-xs text-slate-500">
         {res ? (
           <>
-            Detected: <span className="font-semibold text-slate-700">{res.format}</span> ·{" "}
+            Preview: <span className="font-semibold text-slate-700">{res.format}</span> ·{" "}
             <span className="font-semibold text-slate-700">{res.aps.length}</span> APs
             {res.connected && (
               <>
@@ -244,6 +317,33 @@ function ImportFooter({ text, onImport }: { text: string; onImport: () => void }
       >
         Analyze {res && res.aps.length > 0 ? `${res.aps.length} APs` : ""} →
       </button>
+    </div>
+  );
+}
+
+function StatusItem({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  tone?: "good" | "muted";
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+      <p
+        className={cn(
+          "mt-0.5 text-sm font-semibold",
+          tone === "good" ? "text-emerald-700" : "text-slate-800"
+        )}
+      >
+        {value}
+      </p>
+      <p className="text-[10px] text-slate-400">{hint}</p>
     </div>
   );
 }

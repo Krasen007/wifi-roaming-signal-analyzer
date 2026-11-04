@@ -16,7 +16,7 @@ export interface RegistryEntry {
   bssid: string;
   building: string; // free label e.g. "HQ", "Branch office"
   floor: string; // free label e.g. "Ground", "1st", "2nd"
-  name: string; // friendly AP name e.g. "Living room AP"
+  location: string; // where the AP is in the building, e.g. "Hallway, 2nd floor"
 }
 
 export type Registry = Record<string, RegistryEntry>;
@@ -31,7 +31,8 @@ export type History = Record<string, SamplePoint[]>;
 
 export const MAX_HISTORY_POINTS = 120;
 
-/** Fired when the connected BSSID changes (a roam between APs). */
+/** Fired when the connected BSSID changes (a roam between APs).
+ *  `to` is empty when the connection dropped instead of roaming. */
 export interface RoamEvent {
   t: number;
   from: string;

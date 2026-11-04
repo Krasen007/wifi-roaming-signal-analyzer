@@ -60,7 +60,7 @@ export function Dashboard({
   const ssids = useMemo(() => Array.from(new Set(aps.map((a) => a.ssid))).sort(), [aps]);
   const defaultSsid = aps[0]?.ssid ?? "";
   const [ssid, setSsid] = useState(defaultSsid);
-  const [chartAllWifi, setChartAllWifi] = useState(false);
+  const [chartAllWifi, setChartAllWifi] = useState(true);
   const activeSsid = ssids.includes(ssid) ? ssid : defaultSsid;
 
   const myAps = useMemo(
@@ -327,14 +327,14 @@ export function Dashboard({
                 )}
               </div>
 
-              {/* Roam event log */}
+              {/* Connection event log */}
               <div>
-                <label className="text-xs font-medium text-slate-500">Roam events</label>
+                <label className="text-xs font-medium text-slate-500">Connection events</label>
                 {roams.length === 0 ? (
                   <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-400">
                     {live.watching
-                      ? "No roams yet — walk to another area and watch this fill in when your laptop hops APs."
-                      : "Roams between APs will be logged here as the connected AP changes."}
+                      ? "No connection changes yet — roams and drops will be logged here while you walk around."
+                      : "Roams and disconnects will be logged here as the connected AP changes."}
                   </p>
                 ) : (
                   <ul className="mt-1 max-h-36 space-y-1 overflow-y-auto pr-1">
@@ -349,9 +349,15 @@ export function Dashboard({
                         <span className="inline-flex min-w-0 items-center gap-1 text-[11px] text-slate-600">
                           <span className="truncate">{bssidDisplayName(registry, r.from)}</span>
                           <MoveRight className="h-3 w-3 shrink-0 text-indigo-500" />
-                          <span className="truncate font-semibold text-slate-800">
-                            {bssidDisplayName(registry, r.to)}
-                          </span>
+                          {r.to ? (
+                            <span className="truncate font-semibold text-slate-800">
+                              {bssidDisplayName(registry, r.to)}
+                            </span>
+                          ) : (
+                            <span className="truncate font-semibold text-rose-600">
+                              Disconnected
+                            </span>
+                          )}
                         </span>
                       </li>
                     ))}
@@ -369,6 +375,7 @@ export function Dashboard({
         connectedBssid={connectedBssid}
         registry={registry}
         bandOf={bandOf}
+        connectionEvents={roams}
       />
 
       <DevicesPanel

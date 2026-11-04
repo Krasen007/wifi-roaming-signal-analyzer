@@ -36,17 +36,17 @@ export function groupDevices(aps: AccessPoint[], registry: Registry, connectedBs
     members.sort((a, b) => b.dbm - a.dbm);
     const ssids = Array.from(new Set(members.map((m) => m.ssid)));
     // Prefer a registered member for the device name/location.
-    const named = members.find((m) => registry[m.bssid]?.name?.trim());
+    const withLocation = members.find((m) => registry[m.bssid]?.location?.trim());
     const located = members.find((m) => registry[m.bssid]?.building?.trim() || registry[m.bssid]?.floor?.trim());
-    const ref = named ?? located ?? members[0];
+    const ref = withLocation ?? located ?? members[0];
     return {
       key,
       members,
       index: 0,
       ssids,
       connected: members.some((m) => m.bssid === connectedBssid),
-      displayName: registry[ref.bssid]?.name?.trim()
-        ? registry[ref.bssid].name.trim()
+      displayName: registry[ref.bssid]?.location?.trim()
+        ? registry[ref.bssid].location.trim()
         : bssidDisplayName(registry, ref.bssid),
       location: located ? locationLabel(registry, located.bssid) : null,
     };

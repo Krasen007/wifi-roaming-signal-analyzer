@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Band, History, Registry, SamplePoint } from "../lib/types";
+import type { Band, History, Registry, RoamEvent, SamplePoint } from "../lib/types";
 import { bssidDisplayName } from "../lib/labels";
 import { BandTag } from "./BandTag";
 import { cn } from "../utils/cn";
@@ -52,12 +52,14 @@ export function LiveHistoryChart({
   connectedBssid,
   registry,
   bandOf,
+  connectionEvents,
 }: {
   history: History;
   match: (bssid: string) => boolean;
   connectedBssid: string;
   registry: Registry;
   bandOf: (bssid: string) => Band;
+  connectionEvents: RoamEvent[];
 }) {
   const [focus, setFocus] = useState<string | null>(null);
 
@@ -93,6 +95,8 @@ export function LiveHistoryChart({
   const x = (t: number) => PAD_L + ((t - x0) / span) * (W - PAD_L - PAD_R);
   const y = (dbm: number) => PAD_T + (1 - (dbm - Y_MIN) / (Y_MAX - Y_MIN)) * (H - PAD_T - PAD_B);
 
+  const visibleEvents = connectionEvents.filter((e) => e.t >= x0 && e.t <= xMax);
+
   const path = (pts: RealPoint[]) =>
     pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.t).toFixed(1)},${y(p.dbm).toFixed(1)}`).join(" ");
 
@@ -106,8 +110,9 @@ export function LiveHistoryChart({
         <div>
           <h3 className="text-sm font-semibold text-slate-900">Live signal history</h3>
           <p className="mt-0.5 text-xs text-slate-500">
-            Signal per AP over the last ~{spanMin} min. Dotted parts = AP out of range. Click a line
-            or legend chip to isolate it.
+            Signal per AP over the last ~{spanMin} min. Dotted parts = AP out of range. Vertical
+            lines mark a connection drop (red) or a roam to another AP (amber). Click a line or
+            legend chip to isolate it.
           </p>
         </div>
         {focus && (
@@ -223,6 +228,33 @@ export function LiveHistoryChart({
                   />
                 </g>
               )}
+            </g>
+          );
+        })}
+
+        {visibleEvents.map((e, i) => {
+          const dropped = !e.to;
+          const color = dropped ? "#f43f5e" : "#f59e0b";
+          const label = dropped
+            ? `Connection dropped from ${bssidDisplayName(registry, e.from)}`
+            : `Roamed ${bssidDisplayName(registry, e.from)} → ${bssidDisplayName(registry, e.to)}`;
+          return (
+            <g key={`event-${e.t}-${i}`}>
+              <line
+                x1={x(e.t)}
+                x2={x(e.t)}
+                y1={PAD_T}
+                y2={H - PAD_B}
+                stroke={color}
+                strokeWidth={1.4}
+                strokeDasharray="3 4"
+                opacity={0.85}
+              >
+                <title>
+                  {label} · {new Date(e.t).toLocaleTimeString()}
+                </title>
+              </line>
+              <circle cx={x(e.t)} cy={PAD_T} r={2.5} fill={color} />
             </g>
           );
         })}

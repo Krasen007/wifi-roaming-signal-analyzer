@@ -1,39 +1,95 @@
 import { useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import type { AccessPoint, Registry, RegistryEntry } from "../lib/types";
 import { BandTag } from "./BandTag";
 import { SignalBars } from "./SignalBars";
 import { cn } from "../utils/cn";
 
+type SortKey = "signal" | "bssid" | "ssid" | "building" | "floor" | "location";
+type SortDir = "asc" | "desc";
+type SortState = { key: SortKey; dir: SortDir };
+type Row = { bssid: string; ap?: AccessPoint; entry?: RegistryEntry };
+
+function compareText(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
+}
+
+function rowText(row: Row, key: SortKey): string {
+  switch (key) {
+    case "bssid":
+      return row.bssid;
+    case "ssid":
+      return row.ap?.ssid ?? "";
+    case "building":
+      return row.entry?.building ?? "";
+    case "floor":
+      return row.entry?.floor ?? "";
+    case "location":
+      return row.entry?.location ?? "";
+    default:
+      return "";
+  }
+}
+
 export function RegistryManager({
   aps,
   registry,
+  connectedBssid,
   onChange,
 }: {
   aps: AccessPoint[];
   registry: Registry;
+  connectedBssid: string;
   onChange: (r: Registry) => void;
 }) {
   const [manualBssid, setManualBssid] = useState("");
+  const [sort, setSort] = useState<SortState>({ key: "signal", dir: "desc" });
+
+  const toggleSort = (key: SortKey) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: key === "signal" ? "desc" : "asc" }
+    );
+  };
 
   // union of scanned bssids and registered bssids
   const rows = useMemo(() => {
-    const map = new Map<string, { bssid: string; ap?: AccessPoint; entry?: RegistryEntry }>();
+    const map = new Map<string, Row>();
     for (const ap of aps) map.set(ap.bssid, { bssid: ap.bssid, ap });
     for (const key of Object.keys(registry)) {
       const existing = map.get(key);
       if (existing) existing.entry = registry[key];
       else map.set(key, { bssid: key, entry: registry[key] });
     }
-    return Array.from(map.values()).sort(
-      (a, b) => (b.ap?.dbm ?? -999) - (a.ap?.dbm ?? -999)
-    );
-  }, [aps, registry]);
+
+    const dir = sort.dir === "asc" ? 1 : -1;
+    return Array.from(map.values()).sort((a, b) => {
+      let result = 0;
+      if (sort.key === "signal") {
+        const ad = a.ap?.dbm;
+        const bd = b.ap?.dbm;
+        if (ad == null && bd == null) result = 0;
+        else if (ad == null) result = 1;
+        else if (bd == null) result = -1;
+        else result = (ad - bd) * dir;
+      } else {
+        const av = rowText(a, sort.key).trim();
+        const bv = rowText(b, sort.key).trim();
+        if (!av && !bv) result = 0;
+        else if (!av) result = 1;
+        else if (!bv) result = -1;
+        else result = compareText(av, bv) * dir;
+      }
+      return result || a.bssid.localeCompare(b.bssid);
+    });
+  }, [aps, registry, sort]);
 
   const update = (bssid: string, patch: Partial<RegistryEntry>) => {
-    const prev = registry[bssid] ?? { bssid, building: "", floor: "", name: "" };
+    const prev = registry[bssid] ?? { bssid, building: "", floor: "", location: "" };
     const next: RegistryEntry = { ...prev, ...patch, bssid };
     const r = { ...registry, [bssid]: next };
-    if (!next.building && !next.floor && !next.name) delete r[bssid];
+    if (!next.building && !next.floor && !next.location) delete r[bssid];
     onChange(r);
   };
 
@@ -88,12 +144,22 @@ export function RegistryManager({
         <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-500">
-              <th className="px-4 py-2 font-medium">Signal</th>
-              <th className="px-4 py-2 font-medium">BSSID (AP hardware)</th>
-              <th className="px-4 py-2 font-medium">SSID</th>
-              <th className="px-4 py-2 font-medium">Building</th>
-              <th className="px-4 py-2 font-medium">Floor</th>
-              <th className="px-4 py-2 font-medium">AP name</th>
+              <SortableTh
+                label="Signal"
+                sortKey="signal"
+                sort={sort}
+                onSort={toggleSort}
+              />
+              <SortableTh
+                label="BSSID (AP hardware)"
+                sortKey="bssid"
+                sort={sort}
+                onSort={toggleSort}
+              />
+              <SortableTh label="SSID" sortKey="ssid" sort={sort} onSort={toggleSort} />
+              <SortableTh label="Building" sortKey="building" sort={sort} onSort={toggleSort} />
+              <SortableTh label="Floor" sortKey="floor" sort={sort} onSort={toggleSort} />
+              <SortableTh label="Location" sortKey="location" sort={sort} onSort={toggleSort} />
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -106,13 +172,18 @@ export function RegistryManager({
               </tr>
             )}
             {rows.map((row) => {
-              const registered = !!(row.entry?.building || row.entry?.floor || row.entry?.name);
+              const registered = !!(row.entry?.building || row.entry?.floor || row.entry?.location);
+              const isConnected = row.bssid === connectedBssid;
               return (
                 <tr
                   key={row.bssid}
                   className={cn(
                     "border-b border-slate-100 last:border-0",
-                    registered ? "bg-emerald-50/40" : ""
+                    isConnected
+                      ? "bg-indigo-50 ring-1 ring-inset ring-indigo-200"
+                      : registered
+                        ? "bg-emerald-50/40"
+                        : ""
                   )}
                 >
                   <td className="px-4 py-2">
@@ -129,6 +200,11 @@ export function RegistryManager({
                     <div className="flex items-center gap-2">
                       {row.bssid}
                       {row.ap && <BandTag band={row.ap.band} />}
+                      {isConnected && (
+                        <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                          CONNECTED
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-2 text-slate-600">{row.ap?.ssid ?? "—"}</td>
@@ -152,9 +228,9 @@ export function RegistryManager({
                   </td>
                   <td className="px-4 py-2">
                     <input
-                      value={row.entry?.name ?? ""}
-                      onChange={(e) => update(row.bssid, { name: e.target.value })}
-                      placeholder="e.g. Bedroom AP"
+                      value={row.entry?.location ?? ""}
+                      onChange={(e) => update(row.bssid, { location: e.target.value })}
+                      placeholder="e.g. Hallway, 2nd floor"
                       className="w-32 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
                     />
                   </td>
@@ -190,5 +266,35 @@ export function RegistryManager({
         </button>
       </div>
     </div>
+  );
+}
+
+function SortableTh({
+  label,
+  sortKey,
+  sort,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  sort: SortState;
+  onSort: (key: SortKey) => void;
+}) {
+  const active = sort.key === sortKey;
+  const Icon = !active ? ChevronsUpDown : sort.dir === "asc" ? ChevronUp : ChevronDown;
+  return (
+    <th
+      className="px-4 py-2 font-medium"
+      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="inline-flex items-center gap-1 whitespace-nowrap hover:text-slate-800"
+      >
+        {label}
+        <Icon className={cn("h-3.5 w-3.5", active ? "text-indigo-500" : "text-slate-300")} />
+      </button>
+    </th>
   );
 }

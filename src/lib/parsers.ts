@@ -107,13 +107,15 @@ function currentSssidSafe(s: string) {
 }
 
 /** Windows: netsh wlan show interfaces → which AP we're actually on.
- *  Newer Windows 11 builds label the field "AP BSSID" instead of "BSSID". */
+ *  Newer Windows 11 builds label the field "AP BSSID" instead of "BSSID".
+ *  Returns an empty bssid when the interface is present but disconnected, so
+ *  the app can mark connection drops in the live chart. */
 function parseInterfaces(text: string): ConnectedInfo | undefined {
   const state = text.match(/^\s*State\s+:\s*(.+)$/mi)?.[1]?.trim() ?? null;
+  if (state && !/connected/i.test(state)) return { bssid: "", state };
   const bssidRaw = text
     .match(/^\s*(?:AP\s+)?BSSID\s+:\s*((?:[0-9a-f]{2}:){5}[0-9a-f]{2})/mi)?.[1];
   if (!bssidRaw) return undefined;
-  if (state && !/connected/i.test(state)) return undefined;
   return { bssid: normalizeBssid(bssidRaw), state };
 }
 

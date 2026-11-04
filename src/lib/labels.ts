@@ -13,12 +13,12 @@ export function locationLabel(registry: Registry, bssid: string): string | null 
 }
 
 /**
- * Human-friendly AP name: registered friendly name → location AP → "AP xx:xx"
+ * Human-friendly AP name: registered location → building/floor AP → "AP xx:xx"
  * (the last two MAC bytes, which is usually how mesh boxes are labeled).
  */
 export function bssidDisplayName(registry: Registry, bssid: string): string {
   const e = registry[bssid];
-  if (e?.name?.trim()) return e.name.trim();
+  if (e?.location?.trim()) return e.location.trim();
   const loc = locationLabel(registry, bssid);
   if (loc) return `${loc} AP`;
   return `AP ${bssid.slice(-5).toUpperCase()}`;
