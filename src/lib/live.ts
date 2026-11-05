@@ -176,7 +176,7 @@ export async function queryLoopbackPermission(): Promise<LoopbackPermission> {
   for (const name of names) {
     try {
       const status = await navigator.permissions.query({ name: name as PermissionName });
-      return status.state as LoopbackPermission;
+      return status.state;
     } catch {
       // Unknown permission name on this browser - try the next one.
     }

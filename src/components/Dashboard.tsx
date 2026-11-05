@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Radar } from "lucide-react";
 import type { AccessPoint, Band, History, LiveMeta, Registry, RoamEvent } from "../lib/types";
 import { groupDevices } from "../lib/devices";
+import { registryValueSets } from "../lib/labels";
 import { LiveHistoryChart } from "./LiveHistoryChart";
 import { DevicesPanel } from "./DevicesPanel";
 import { DashboardControls } from "./DashboardControls";
@@ -36,7 +37,7 @@ export function Dashboard({
   live: LiveMeta;
   history: History;
   lastSeenSsid: Record<string, string>;
-  lastSeenBand: Record<string, string>;
+  lastSeenBand: Record<string, Band>;
   roams: RoamEvent[];
 }) {
   const ssids = useMemo(() => Array.from(new Set(aps.map((a) => a.ssid))).sort(), [aps]);
@@ -53,12 +54,7 @@ export function Dashboard({
   const connected = aps.find((a) => a.bssid === connectedBssid);
 
   const { floors, buildings } = useMemo(() => {
-    const f = new Set<string>();
-    const b = new Set<string>();
-    Object.values(registry).forEach((e) => {
-      e.floor && f.add(e.floor);
-      e.building && b.add(e.building);
-    });
+    const { floors: f, buildings: b } = registryValueSets(registry);
     return { floors: Array.from(f).sort(), buildings: Array.from(b).sort() };
   }, [registry]);
 
@@ -71,7 +67,7 @@ export function Dashboard({
     for (const d of devices) for (const member of d.members) m.set(member.bssid, d.index);
     return m;
   }, [devices]);
-  const bandOf = (bssid: string): Band => (lastSeenBand[bssid] as Band) ?? "?";
+  const bandOf = (bssid: string): Band => lastSeenBand[bssid] ?? "?";
 
   if (aps.length === 0) {
     return (

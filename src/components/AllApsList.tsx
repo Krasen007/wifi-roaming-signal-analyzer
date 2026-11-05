@@ -2,7 +2,7 @@ import { Building2, MapPin, Minus, TrendingDown, TrendingUp } from "lucide-react
 import type { AccessPoint, History, Registry } from "../lib/types";
 import type { DeviceGroup } from "../lib/devices";
 import { quality } from "../lib/signal";
-import { apDisplayName } from "../lib/labels";
+import { bssidDisplayName } from "../lib/labels";
 import { SignalBars } from "./SignalBars";
 import { BandTag } from "./BandTag";
 import { cn } from "../utils/cn";
@@ -67,7 +67,7 @@ export function AllApsList({
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="truncate text-sm font-semibold text-slate-800">
-                    {apDisplayName(registry, a)}
+                    {bssidDisplayName(registry, a.bssid)}
                   </span>
                   {hasMultipleMembers && (
                     <span

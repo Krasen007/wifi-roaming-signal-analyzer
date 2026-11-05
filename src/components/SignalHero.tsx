@@ -1,7 +1,7 @@
 import { MapPin } from "lucide-react";
 import type { AccessPoint, Registry } from "../lib/types";
 import { quality } from "../lib/signal";
-import { apDisplayName, locationLabel } from "../lib/labels";
+import { bssidDisplayName, locationLabel } from "../lib/labels";
 import { SignalBars } from "./SignalBars";
 import { BandTag } from "./BandTag";
 
@@ -23,7 +23,7 @@ export function SignalHero({ strongest, activeSsid, registry }: SignalHeroProps)
             Best AP for “{activeSsid}”
           </p>
           <p className="mt-1 truncate text-2xl font-bold">
-            {apDisplayName(registry, strongest)}
+            {bssidDisplayName(registry, strongest.bssid)}
           </p>
           <p className="mt-0.5 font-mono text-xs text-slate-400">{strongest.bssid}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">

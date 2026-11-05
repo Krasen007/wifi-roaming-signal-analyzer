@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Radio, TriangleAlert } from "lucide-react";
-import type { AccessPoint, History, Registry, RoamEvent } from "./lib/types";
+import type { AccessPoint, Band, History, Registry, RoamEvent } from "./lib/types";
 import { MAX_HISTORY_POINTS } from "./lib/types";
 import type { ConnectedInfo } from "./lib/parsers";
 import { parseScan } from "./lib/parsers";
@@ -32,7 +32,7 @@ export default function App() {
   const [connectedBssid, setConnectedBssid] = useState("");
   const [history, setHistory] = useState<History>({});
   const [lastSeenSsid, setLastSeenSsid] = useState<Record<string, string>>({});
-  const [lastSeenBand, setLastSeenBand] = useState<Record<string, string>>({});
+  const [lastSeenBand, setLastSeenBand] = useState<Record<string, Band>>({});
   const [roams, setRoams] = useState<RoamEvent[]>([]);
   const autoNavRef = useRef(false);
 
@@ -60,7 +60,6 @@ export default function App() {
     saveConnected(b);
   }, []);
 
-  /** Append one scan to APs + history (+ gap markers for APs that left range). */
   const recordScan = useCallback((parsed: AccessPoint[]) => {
     if (parsed.length === 0) return;
     setAps(parsed);
@@ -96,7 +95,6 @@ export default function App() {
     });
   }, []);
 
-  /** Core ingest: parse text → update APs, history, connected BSSID. */
   const ingestText = useCallback(
     (text: string, navigate: boolean) => {
       const res = parseScan(text);
@@ -130,7 +128,6 @@ export default function App() {
     prevWatching.current = watching;
   }, [watching]);
 
-  // Detect connection changes: roams (AP → AP) and drops (AP → nothing).
   const prevConnectedRef = useRef("");
   useEffect(() => {
     const prev = prevConnectedRef.current;

@@ -5,6 +5,8 @@ import { BandTag } from "./BandTag";
 import { SignalBars } from "./SignalBars";
 import { cn } from "../utils/cn";
 
+import { registryValueSets } from "../lib/labels";
+
 type SortKey = "signal" | "bssid" | "ssid" | "building" | "floor" | "location";
 type SortDir = "asc" | "desc";
 type SortState = { key: SortKey; dir: SortDir };
@@ -102,12 +104,7 @@ export function RegistryManager({
   // Free-text fields: suggestions reuse values you've already used, so the same
   // floor name in different buildings (or custom building names) keeps working.
   const { floorSuggestions, buildingSuggestions } = useMemo(() => {
-    const floors = new Set<string>();
-    const buildings = new Set<string>();
-    Object.values(registry).forEach((e) => {
-      e.floor && floors.add(e.floor);
-      e.building && buildings.add(e.building);
-    });
+    const { floors, buildings } = registryValueSets(registry);
     return { floorSuggestions: Array.from(floors), buildingSuggestions: Array.from(buildings) };
   }, [registry]);
 

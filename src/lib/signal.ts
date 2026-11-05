@@ -42,13 +42,6 @@ export function bandFromChannel(channel: number | null): Band {
   return "?";
 }
 
-export function bandFromFreq(freqMhz: number): Band {
-  if (freqMhz >= 2400 && freqMhz < 2500) return "2.4";
-  if (freqMhz >= 5000 && freqMhz < 5900) return "5";
-  if (freqMhz >= 5925 && freqMhz <= 7125) return "6";
-  return "?";
-}
-
 export function normalizeBssid(mac: string): string {
   return mac
     .trim()

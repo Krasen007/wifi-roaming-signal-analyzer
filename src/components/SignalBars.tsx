@@ -1,6 +1,9 @@
 import { quality } from "../lib/signal";
 import { cn } from "../utils/cn";
 
+const BAR_BASE_HEIGHT = 6;
+const BAR_STEP = 4;
+
 export function SignalBars({ dbm, className }: { dbm: number; className?: string }) {
   const q = quality(dbm);
   const active = q.tier + 1; // 1-5 bars
@@ -13,7 +16,7 @@ export function SignalBars({ dbm, className }: { dbm: number; className?: string
             "w-1.5 rounded-sm transition-colors",
             i < active ? q.bg : "bg-slate-200"
           )}
-          style={{ height: `${6 + i * 4}px` }}
+          style={{ height: `${BAR_BASE_HEIGHT + i * BAR_STEP}px` }}
         />
       ))}
     </div>

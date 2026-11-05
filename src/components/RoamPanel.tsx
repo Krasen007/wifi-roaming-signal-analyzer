@@ -1,6 +1,6 @@
 import { CircleCheck, MoveRight, Search, TriangleAlert, Zap } from "lucide-react";
 import type { AccessPoint, LiveMeta, Registry, RoamEvent } from "../lib/types";
-import { apDisplayName, bssidDisplayName, locationLabel } from "../lib/labels";
+import { bssidDisplayName, locationLabel } from "../lib/labels";
 import { ROAM_DELTA_THRESHOLD_DBM } from "../lib/signal";
 
 export interface RoamPanelProps {
@@ -125,7 +125,7 @@ export function RoamPanel({
             <option value="">— unknown —</option>
             {myAps.map((a) => (
               <option key={a.bssid} value={a.bssid}>
-                {apDisplayName(registry, a) + ` · ${a.dbm} dBm`}
+                {bssidDisplayName(registry, a.bssid) + ` · ${a.dbm} dBm`}
               </option>
             ))}
           </select>

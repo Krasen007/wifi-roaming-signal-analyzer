@@ -54,7 +54,11 @@ export function ScanImport({
   };
 
   const dropFile = async (file: File) => {
-    onParsedText(await file.text());
+    try {
+      onParsedText(await file.text());
+    } catch (err) {
+      console.warn("Failed to read dropped file", err);
+    }
   };
 
   const onParsedText = (t: string) => {

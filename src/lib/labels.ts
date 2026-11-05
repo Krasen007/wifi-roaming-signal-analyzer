@@ -1,4 +1,4 @@
-import type { AccessPoint, Registry } from "./types";
+import type { Registry } from "./types";
 
 /** "Building · Floor" location string, or whichever part is set. */
 export function locationLabel(registry: Registry, bssid: string): string | null {
@@ -24,6 +24,16 @@ export function bssidDisplayName(registry: Registry, bssid: string): string {
   return `AP ${bssid.slice(-5).toUpperCase()}`;
 }
 
-export function apDisplayName(registry: Registry, ap: AccessPoint): string {
-  return bssidDisplayName(registry, ap.bssid);
+/** Collect the distinct floor/building values already present in a registry. */
+export function registryValueSets(registry: Registry): {
+  floors: Set<string>;
+  buildings: Set<string>;
+} {
+  const floors = new Set<string>();
+  const buildings = new Set<string>();
+  for (const e of Object.values(registry)) {
+    if (e.floor) floors.add(e.floor);
+    if (e.building) buildings.add(e.building);
+  }
+  return { floors, buildings };
 }
