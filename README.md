@@ -53,13 +53,10 @@ When FloorScope is served as a static site (for example GitHub Pages), there is 
 server to read `scan.txt`. Open the deployed site, go to **Live setup**, and click
 **Download Windows scanner (.bat)**.
 
-Build the site locally with `npm run build`, then publish the contents of the `dist/`
-folder (including `index.html`, `assets/`, `icon.svg`, `manifest.webmanifest`, and
-`.nojekyll`) to your GitHub Pages source (for example the repository root or the
-`docs/` folder on `main`). The production build uses relative asset paths, so it
-works under the repository subpath without any environment variables. In the
-repository's **Settings → Pages**, set the build and deployment source to the
-branch/folder you published. Local development continues to use `npm run dev`.
+Run `npm run build` — it writes the production site to the `docs/` folder automatically.
+Then commit/push `docs/` and point GitHub Pages at **Settings → Pages → branch `main`, folder `/docs`**.
+The build uses relative asset paths, so it works under the repository subpath without any
+environment variables. Local development continues to use `npm run dev`.
 
 Double-click the downloaded `floorscope-scanner.bat`. It:
 

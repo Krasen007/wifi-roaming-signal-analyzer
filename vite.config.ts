@@ -108,6 +108,11 @@ export default defineConfig(({ command }) => ({
   // paths so the same bundle works on GitHub Pages (project subpath) or any
   // other static host without environment-specific configuration.
   base: command === "build" ? "./" : "/",
+  // Classic GitHub Pages flow: build directly into ./docs so it can be
+  // published from the `docs/` folder on `main` without copying files.
+  build: {
+    outDir: "docs",
+  },
   plugins: [react(), tailwindcss(), serveScanFile()],
   resolve: {
     alias: {
