@@ -173,6 +173,18 @@ export function ScanImport({
             <Download className="h-4 w-4" />
             Download Windows scanner (.bat)
           </button>
+          {live.bridge && live.supported && (
+            <button
+              onClick={live.watching ? live.stop : live.start}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
+                live.watching ? "bg-rose-600 hover:bg-rose-500" : "bg-indigo-600 hover:bg-indigo-500"
+              )}
+            >
+              {live.watching ? <Square className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+              {live.watching ? "Stop watching" : "Connect local scanner"}
+            </button>
+          )}
           {live.bridge && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
               <Link2 className="h-3.5 w-3.5" /> Bridge URL detected
@@ -188,8 +200,9 @@ export function ScanImport({
           </li>
           <li>Keep the scanner window open — it opens this page already pointed at the bridge.</li>
           <li>
-            Click <b>Connect local scanner</b> and allow <b>local network access</b> when the
-            browser asks. Chrome/Edge only; Safari blocks loopback requests.
+            In the <b>Portable mode</b> section above, click <b>Connect local scanner</b> and allow{" "}
+            <b>local network access</b> when the browser asks. Chrome/Edge only; Safari blocks
+            loopback requests.
           </li>
         </ol>
 
@@ -259,9 +272,8 @@ export function ScanImport({
             <p className="mt-0.5 text-xs text-slate-600">
               {live.bridge ? (
                 <>
-                  This page is pointed at the <b>local scanner bridge</b>. Click{" "}
-                  <b>Connect local scanner</b> to start reading <b>scan.txt</b> from{" "}
-                  <b>127.0.0.1</b>; the browser may ask for local network access first.
+                  This page is pointed at the <b>local scanner bridge</b>. Use the button in the{" "}
+                  <b>Portable mode</b> section above to read <b>scan.txt</b> from <b>127.0.0.1</b>.
                 </>
               ) : live.auto ? (
                 <>
@@ -279,39 +291,47 @@ export function ScanImport({
         </div>
 
         {live.supported ? (
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
-              onClick={live.watching ? live.stop : live.start}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
-                live.watching ? "bg-rose-600 hover:bg-rose-500" : "bg-indigo-600 hover:bg-indigo-500"
+          (!live.bridge || live.watching) && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              {!live.bridge && (
+                <button
+                  onClick={live.watching ? live.stop : live.start}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
+                    live.watching
+                      ? "bg-rose-600 hover:bg-rose-500"
+                      : "bg-indigo-600 hover:bg-indigo-500"
+                  )}
+                >
+                  {live.watching ? (
+                    <Square className="h-4 w-4" />
+                  ) : (
+                    <FileText className="h-4 w-4" />
+                  )}
+                  {live.watching
+                    ? "Stop watching"
+                    : live.auto
+                      ? "Restart live watch"
+                      : "Pick scan.txt & go live"}
+                </button>
               )}
-            >
-              {live.watching ? <Square className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
-              {live.watching
-                ? "Stop watching"
-                : live.bridge
-                  ? "Connect local scanner"
-                  : live.auto
-                    ? "Restart live watch"
-                    : "Pick scan.txt & go live"}
-            </button>
 
-            {live.watching && (
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                </span>
-                <span className="font-mono text-xs">{live.fileName}</span>
-                {live.lastUpdate && (
-                  <span className="text-xs text-slate-400">
-                    · updated {new Date(live.lastUpdate).toLocaleTimeString()}
+              {live.watching && (
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                   </span>
-                )}
-              </div>
-            )}
-          </div>
+                  <span className="font-mono text-xs">{live.fileName}</span>
+                  {live.lastUpdate && (
+                    <span className="text-xs text-slate-400">
+                      · updated {new Date(live.lastUpdate).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )
         ) : (
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
             <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />

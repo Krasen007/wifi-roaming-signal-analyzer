@@ -59,8 +59,8 @@ Double-click the downloaded `floorscope-scanner.bat`. It:
 2. serves that file on `127.0.0.1` behind a random token,
 3. reopens the hosted page with `?live=http://127.0.0.1:<port>/<token>/scan.txt`.
 
-In the page, click **Connect local scanner** and allow **local network access** when the browser
-asks (Chrome/Edge; Safari blocks loopback requests). Windows SmartScreen (and some antivirus
+In the page's **Portable mode** section, click **Connect local scanner** and allow **local network
+access** when the browser asks (Chrome/Edge; Safari blocks loopback requests). Windows SmartScreen (and some antivirus
 tools) may warn because the `.bat` was downloaded — choose **More info → Run anyway** if you
 trust the source. The file is plain text, so you can inspect it in Notepad. Keep the scanner
 window open while analyzing; closing it stops both the loop and the bridge.
@@ -94,7 +94,7 @@ window open while analyzing; closing it stops both the loop and the bridge.
 FloorScope is organized into three focused tabs:
 
 ### 1. Dashboard
-- **Active Network & Floor Selector:** Filter by SSID and set your current location ("Building" and "Floor"). The signal-history chart follows the selected SSID.
+- **Active Network & Floor Selector:** Filter by SSID, choose the chart scope (selected SSID or all detected Wi-Fi), and set your current location ("Building" and "Floor").
 - **Best AP Hero Card:** Displays the strongest AP for the active network, showing signal in dBm, qualitative rating (Excellent, Good, Fair, Weak, Poor), channel, frequency band (2.4 GHz, 5 GHz, 6 GHz), and 802.11 radio protocol.
 - **Roaming Check & Event Log:** Immediate feedback on connection state (Optimal, Sticky Client, or Wrong Floor attachment) and a chronological list of recent roams and disconnects.
 - **Signal History Timeline:** Live multi-series SVG chart tracking signal trends over time.

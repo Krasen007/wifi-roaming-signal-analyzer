@@ -4,6 +4,8 @@ export interface DashboardControlsProps {
   activeSsid: string;
   ssids: string[];
   onSelectSsid: (ssid: string) => void;
+  chartAllWifi: boolean;
+  onSelectChartScope: (allWifi: boolean) => void;
   currentBuilding: string;
   onChangeBuilding: (building: string) => void;
   buildings: string[];
@@ -17,6 +19,8 @@ export function DashboardControls({
   activeSsid,
   ssids,
   onSelectSsid,
+  chartAllWifi,
+  onSelectChartScope,
   currentBuilding,
   onChangeBuilding,
   buildings,
@@ -37,6 +41,25 @@ export function DashboardControls({
           onChange={(e) => onSelectSsid(e.target.value)}
           className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
         >
+          {ssids.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <label htmlFor="chart-network" className="text-xs font-medium text-slate-500">
+          Chart
+        </label>
+        <select
+          id="chart-network"
+          value={chartAllWifi ? "__all__" : activeSsid}
+          onChange={(e) => onSelectChartScope(e.target.value === "__all__")}
+          className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+        >
+          <option value="__all__">All detected Wi-Fi</option>
           {ssids.map((s) => (
             <option key={s} value={s}>
               {s}

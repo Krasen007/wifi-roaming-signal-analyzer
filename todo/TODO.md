@@ -8,7 +8,7 @@
 ### 1.2 Discrepancies & Unfinished Items (Found in Codebase Audit)
 
 1. **Dashboard Decomposition (Completed):** Dashboard controls, signal hero, roaming check, same-SSID AP ranking, and neighboring networks are implemented in and imported from their dedicated component files. `Dashboard.tsx` coordinates those components with the history chart and physical-device panel.
-2. **Chart Scope:** The history timeline is scoped to the selected SSID so neighboring networks do not introduce a second charting model.
+2. **Chart Scope:** The history timeline can show either the selected SSID or all detected Wi-Fi networks.
 3. **Over-Engineered Chart (Deferred):** `LiveHistoryChart.tsx` has complex SVG gap connectors, focus modes, and color palette hashing.
 
 ---

@@ -81,7 +81,7 @@ export function LiveHistoryChart({
   if (series.length === 0) return null;
 
   const W = 640;
-  const H = 180;
+  const H = 280;
   const PAD_L = 38;
   const PAD_R = 14;
   const PAD_T = 10;
@@ -105,11 +105,11 @@ export function LiveHistoryChart({
   const toggle = (bssid: string) => setFocus((f) => (f === bssid ? null : bssid));
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">Live signal history</h3>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <h3 className="text-base font-semibold text-slate-900">Live signal history</h3>
+          <p className="mt-1 text-sm text-slate-500">
             Signal per AP over the last ~{spanMin} min. Dotted parts = AP out of range. Vertical
             lines mark a connection drop (red) or a roam to another AP (amber). Click a line or
             legend chip to isolate it.
@@ -125,7 +125,7 @@ export function LiveHistoryChart({
         )}
       </div>
 
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 h-44 w-full" preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-4 h-72 w-full md:h-80" preserveAspectRatio="none">
         {ticks.map((t) => (
           <g key={t}>
             <line x1={PAD_L} x2={W - PAD_R} y1={y(t)} y2={y(t)} stroke="#e2e8f0" strokeWidth={1} />

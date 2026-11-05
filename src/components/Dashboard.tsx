@@ -42,6 +42,7 @@ export function Dashboard({
   const ssids = useMemo(() => Array.from(new Set(aps.map((a) => a.ssid))).sort(), [aps]);
   const defaultSsid = aps[0]?.ssid ?? "";
   const [ssid, setSsid] = useState(defaultSsid);
+  const [chartAllWifi, setChartAllWifi] = useState(true);
   const activeSsid = ssids.includes(ssid) ? ssid : defaultSsid;
 
   const myAps = useMemo(
@@ -91,6 +92,8 @@ export function Dashboard({
         activeSsid={activeSsid}
         ssids={ssids}
         onSelectSsid={setSsid}
+        chartAllWifi={chartAllWifi}
+        onSelectChartScope={setChartAllWifi}
         currentBuilding={currentBuilding}
         onChangeBuilding={setCurrentBuilding}
         buildings={buildings}
@@ -121,7 +124,7 @@ export function Dashboard({
 
       <LiveHistoryChart
         history={history}
-        match={(bssid) => (lastSeenSsid[bssid] ?? "") === activeSsid}
+        match={(bssid) => chartAllWifi || (lastSeenSsid[bssid] ?? "") === activeSsid}
         connectedBssid={connectedBssid}
         registry={registry}
         bandOf={bandOf}
