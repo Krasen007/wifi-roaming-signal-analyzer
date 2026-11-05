@@ -10,8 +10,10 @@ import {
 
 export interface LiveWatch {
   supported: boolean;
-  /** True when live mode was bootstrapped by the launcher (`?live=` in the URL). */
+  /** True when live mode was bootstrapped (`?live=` in the URL). */
   auto: boolean;
+  /** True when `?live=` points at the portable loopback scanner bridge. */
+  bridge: boolean;
   watching: boolean;
   fileName: string | null;
   lastUpdate: number | null;
@@ -30,6 +32,7 @@ export interface LiveWatch {
  */
 export function useLiveWatch(onText: (text: string) => void): LiveWatch {
   const autoSource = useMemo(() => autoLiveSource(), []);
+  const bridge = autoSource?.bridge ?? false;
   const supported = autoSource !== null || fsaSupported();
   const [watching, setWatching] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -65,9 +68,13 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
 
   // Launcher-opened app (`?live=scan.txt`): go live on load. The ref keeps
   // StrictMode's double-invoked effects from attaching twice.
+  //
+  // Loopback bridges are the exception: Chrome's Local Network Access prompt
+  // must be triggered by an explicit user gesture, so the user clicks
+  // "Connect local scanner" instead of us firing the fetch on page load.
   const autoStartedRef = useRef(false);
   useEffect(() => {
-    if (!autoSource || autoStartedRef.current) return;
+    if (!autoSource || autoSource.bridge || autoStartedRef.current) return;
     autoStartedRef.current = true;
     void start();
   }, [autoSource, start]);
@@ -92,6 +99,7 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
           const text = await f.text();
           if (!cancelled) {
             setLastUpdate(Date.now());
+            if (text) setError(null);
             onTextRef.current(text);
           }
         }
@@ -102,6 +110,12 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
               ? err.message
               : "Lost access to the file. The scan may have moved or the loop stopped — pick the file again."
           );
+          // A bridge that can't be reached (permission denied, window closed)
+          // stops cleanly so the user can retry with the Connect button.
+          if (bridge) {
+            setWatching(false);
+            handleRef.current = null;
+          }
         }
       }
     };
@@ -112,7 +126,17 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
       cancelled = true;
       clearInterval(id);
     };
-  }, [watching]);
+  }, [bridge, watching]);
 
-  return { supported, auto: autoSource !== null, watching, fileName, lastUpdate, error, start, stop };
+  return {
+    supported,
+    auto: autoSource !== null,
+    bridge,
+    watching,
+    fileName,
+    lastUpdate,
+    error,
+    start,
+    stop,
+  };
 }

@@ -47,7 +47,27 @@ The launcher script automatically:
 
 ---
 
-### Option 2: Manual / Development Mode
+### Option 2: Hosted / Portable Mode (GitHub Pages)
+
+When FloorScope is served as a static site (for example GitHub Pages), there is no local dev
+server to read `scan.txt`. Open the deployed site, go to **Live setup**, and click
+**Download Windows scanner (.bat)**.
+
+Double-click the downloaded `floorscope-scanner.bat`. It:
+
+1. starts the `netsh` scan loop writing to `%LOCALAPPDATA%\FloorScope\scan.txt`,
+2. serves that file on `127.0.0.1` behind a random token,
+3. reopens the hosted page with `?live=http://127.0.0.1:<port>/<token>/scan.txt`.
+
+In the page, click **Connect local scanner** and allow **local network access** when the browser
+asks (Chrome/Edge; Safari blocks loopback requests). Windows SmartScreen (and some antivirus
+tools) may warn because the `.bat` was downloaded — choose **More info → Run anyway** if you
+trust the source. The file is plain text, so you can inspect it in Notepad. Keep the scanner
+window open while analyzing; closing it stops both the loop and the bridge.
+
+---
+
+### Option 3: Manual / Development Mode
 
 1. **Install dependencies:**
    ```powershell
@@ -84,6 +104,7 @@ FloorScope is organized into three focused tabs:
 
 ### 2. Live Setup
 - Status monitor for live scan ingestion (mode, update cadence, AP count, last timestamp).
+- Portable scanner generator for hosted/GitHub Pages deployments (`.bat` + loopback bridge).
 - PowerShell loop command runner and quick-copy shortcut.
 - Fallback manual upload (drag-and-drop `scan.txt` or paste `netsh` output directly).
 
@@ -124,9 +145,10 @@ wifi-roaming-signal-analyzer/
 │   │   ├── SignalBars.tsx        # Signal visualizer bars
 │   │   └── BandTag.tsx           # Frequency band badges (2.4G / 5G / 6G)
 │   ├── lib/
+│   │   ├── bridgeBat.ts          # Portable scanner .bat + loopback HTTP bridge generator
 │   │   ├── devices.ts            # Physical device grouping algorithm
 │   │   ├── labels.ts             # Display label formatters
-│   │   ├── live.ts               # File System Access & HTTP fetch handles
+│   │   ├── live.ts               # File System Access, HTTP fetch & loopback bridge handles
 │   │   ├── parsers.ts            # netsh output parsers & BSSID normalizer
 │   │   ├── signal.ts             # Signal math (dBm <-> percentage, band detection)
 │   │   ├── storage.ts            # LocalStorage persistence helpers

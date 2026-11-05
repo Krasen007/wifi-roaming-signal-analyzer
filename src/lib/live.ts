@@ -17,43 +17,109 @@ export function fsaSupported(): boolean {
   return typeof window !== "undefined" && typeof window.showOpenFilePicker === "function";
 }
 
-/** Thrown when a non-picker source (the dev server) can't hand over the scan. */
+/** Thrown when a non-picker source (the dev server or a local bridge) can't hand over the scan. */
 export class LiveSourceError extends Error {}
 
 export interface HttpSource {
-  /** Path on the dev server, e.g. `/scan.txt`. */
+  /** URL to poll, either same-origin (`/scan.txt`) or a loopback bridge. */
   url: string;
   name: string;
+  /** True when the URL points at the local scanner bridge (127.0.0.1). */
+  bridge: boolean;
+}
+
+function isLoopbackHost(host: string): boolean {
+  const h = host.toLowerCase();
+  return (
+    h === "localhost" ||
+    h.endsWith(".localhost") ||
+    h === "::1" ||
+    h === "[::1]" ||
+    /^127(?:\.\d{1,3}){3}$/.test(h)
+  );
+}
+
+function isLoopbackUrl(url: string): boolean {
+  try {
+    return isLoopbackHost(new URL(url, window.location.href).hostname);
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Live mode can be bootstrapped by the launcher instead of the file picker:
- * `start.bat` opens the app with `?live=scan.txt`, and the Vite dev server serves
- * that file from the project root (see `serveScanFile()` in vite.config.ts).
+ * Live mode can be bootstrapped by the launcher or the portable bridge:
+ *  - `start.bat` opens `?live=scan.txt`, served by the local Vite server.
+ *  - the downloaded scanner `.bat` opens `?live=http://127.0.0.1:<port>/<token>/scan.txt`.
  * Returns null when the app was opened without the parameter (normal manual flow).
  */
 export function autoLiveSource(): HttpSource | null {
   if (typeof window === "undefined") return null;
   const param = new URLSearchParams(window.location.search).get("live");
   if (param === null) return null;
-  const name = param.trim() === "" || param.trim() === "1" ? "scan.txt" : param.trim();
-  return { url: `/${encodeURIComponent(name)}`, name };
+
+  const raw = param.trim();
+  const localPage = isLoopbackHost(window.location.hostname);
+
+  if (raw === "" || raw === "1") {
+    // A relative scan.txt only makes sense when the app itself is served
+    // locally (start.bat / Vite). On a hosted site it would just 404.
+    return localPage ? { url: "/scan.txt", name: "scan.txt", bridge: false } : null;
+  }
+
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) {
+    let url: URL;
+    try {
+      url = new URL(raw);
+    } catch {
+      return null;
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    const last = url.pathname.split("/").filter(Boolean).pop() ?? "scan.txt";
+    let name = last;
+    try {
+      name = decodeURIComponent(last);
+    } catch {
+      // Malformed escape in the URL path - keep the raw segment.
+    }
+    return {
+      url: url.toString(),
+      name,
+      bridge: isLoopbackHost(url.hostname),
+    };
+  }
+
+  // Relative file name: only valid on a local page served by the Vite server.
+  return localPage ? { url: `/${encodeURIComponent(raw)}`, name: raw, bridge: false } : null;
 }
 
 /**
- * WatchHandle backed by a plain HTTP GET: no user gesture or permission needed, so
- * the app can go live the moment it loads.
+ * WatchHandle backed by a plain HTTP GET: no user gesture or permission needed
+ * for same-origin sources, so `start.bat` can go live the moment it loads.
+ *
+ * Loopback bridges additionally need `targetAddressSpace: "loopback"` so the
+ * browser exempts them from mixed-content blocking (Chrome 142+ Local Network
+ * Access) after the user grants permission.
  */
 export function httpScanHandle(src: HttpSource): WatchHandle {
   return {
     name: src.name,
     async getFile(): Promise<File> {
+      const loopback = src.bridge || isLoopbackUrl(src.url);
+      const init: RequestInit & { targetAddressSpace?: "loopback" } = {
+        cache: "no-store",
+        mode: "cors",
+      };
+      if (loopback) init.targetAddressSpace = "loopback";
+
       let res: Response;
       try {
-        res = await fetch(src.url, { cache: "no-store" });
+        res = await fetch(new Request(src.url, init));
       } catch {
         throw new LiveSourceError(
-          `Can't reach the dev server for ${src.name} - is it still running?`
+          src.bridge
+            ? "Can't reach the local scanner. Allow local network access for this site, then make sure the FloorScope scanner window is still open."
+            : `Can't reach the dev server for ${src.name} - is it still running?`
         );
       }
       if (res.status === 404) {
@@ -62,13 +128,13 @@ export function httpScanHandle(src: HttpSource): WatchHandle {
       }
       if (!res.ok) {
         throw new LiveSourceError(
-          `Couldn't read ${src.name} from the dev server (HTTP ${res.status}).`
+          `Couldn't read ${src.name} from the server (HTTP ${res.status}).`
         );
       }
       const contentType = res.headers.get("content-type") ?? "";
       if (contentType.includes("text/html")) {
         throw new LiveSourceError(
-          `This server doesn't serve ${src.name} - use start.bat for automatic live mode.`
+          `This server doesn't serve ${src.name} - use start.bat or the portable scanner.`
         );
       }
       const text = await res.text();
@@ -95,4 +161,25 @@ export async function pickScanFile(): Promise<WatchHandle | null> {
     // user cancelled the picker
     return null;
   }
+}
+
+export type LoopbackPermission = "granted" | "prompt" | "denied" | "unknown";
+
+/**
+ * Chrome/Edge 142+ gate public-site → loopback requests behind a permission.
+ * Older builds used `local-network-access`; newer ones split it into
+ * `loopback-network`. Browsers without the API return "unknown".
+ */
+export async function queryLoopbackPermission(): Promise<LoopbackPermission> {
+  if (typeof navigator === "undefined" || !navigator.permissions) return "unknown";
+  const names = ["loopback-network", "local-network-access", "local-network"];
+  for (const name of names) {
+    try {
+      const status = await navigator.permissions.query({ name: name as PermissionName });
+      return status.state as LoopbackPermission;
+    } catch {
+      // Unknown permission name on this browser - try the next one.
+    }
+  }
+  return "unknown";
 }

@@ -56,3 +56,6 @@ export function normalizeBssid(mac: string): string {
     .replace(/\\/g, "")
     .replace(/-/g, ":");
 }
+
+/** A neighbouring AP must beat the connected one by this much to count as a sticky client. */
+export const ROAM_DELTA_THRESHOLD_DBM = 8;

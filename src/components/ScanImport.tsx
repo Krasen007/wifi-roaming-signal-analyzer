@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Activity,
   CircleAlert,
   Copy,
   Check,
+  Download,
   FileText,
   Play,
   Square,
   Upload,
   Info,
+  Link2,
 } from "lucide-react";
 import { parseScan, type ConnectedInfo } from "../lib/parsers";
 import type { AccessPoint } from "../lib/types";
 import { cn } from "../utils/cn";
 import type { LiveWatch } from "../lib/useLiveWatch";
+import { queryLoopbackPermission, type LoopbackPermission } from "../lib/live";
+import { downloadBridgeBat } from "../lib/bridgeBat";
 
 const LOOP_CMD =
   "while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; Start-Sleep 5 }";
@@ -30,6 +34,12 @@ export function ScanImport({
   const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [permission, setPermission] = useState<LoopbackPermission>("unknown");
+
+  useEffect(() => {
+    if (!live.bridge) return;
+    void queryLoopbackPermission().then(setPermission);
+  }, [live.bridge, live.watching]);
 
   const copyLoop = () => {
     navigator.clipboard?.writeText(LOOP_CMD);
@@ -66,8 +76,9 @@ export function ScanImport({
             <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
               This tab is the <b>data source</b> for the dashboard — it controls how FloorScope
               reads <b>scan.txt</b>. When you launch with <b>start.bat</b>, the scan loop and live
-              mode are already running, so you normally don&apos;t need to change anything here.
-              Open it only if live updates stop, or if you want to switch to manual mode.
+              mode are already running. On a hosted site (e.g. GitHub Pages), use the{" "}
+              <b>portable scanner</b> below. Open it only if live updates stop, or if you want to
+              switch to manual mode.
             </p>
           </div>
         </div>
@@ -75,8 +86,16 @@ export function ScanImport({
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <StatusItem
             label="Mode"
-            value={live.auto ? "Automatic" : "Manual"}
-            hint={live.auto ? "started by start.bat" : "you pick the file"}
+            value={live.bridge ? "Portable bridge" : live.auto ? "Automatic" : "Manual"}
+            hint={
+              live.bridge
+                ? live.watching
+                  ? "connected to local scanner"
+                  : "click Connect below"
+                : live.auto
+                  ? "started by start.bat"
+                  : "you pick the file"
+            }
           />
           <StatusItem
             label="Live updates"
@@ -105,7 +124,7 @@ export function ScanImport({
             </li>
             <li>
               <b>Updated 14:32:05</b>: when a new scan was last read. If it stops changing, the
-              loop or dev server is not running.
+              loop, dev server, or scanner bridge is not running.
             </li>
             <li>
               <b>AP Registry</b> badge: how many BSSIDs you&apos;ve assigned a building, floor, or
@@ -118,10 +137,77 @@ export function ScanImport({
           </ul>
         </div>
 
-        {live.auto && live.watching && (
+        {(live.auto || live.bridge) && live.watching && (
           <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-            <Check className="h-3.5 w-3.5" /> All set — start.bat is feeding scans to the dashboard.
-            You can go back to Dashboard.
+            <Check className="h-3.5 w-3.5" /> All set —{" "}
+            {live.bridge ? "the local scanner bridge is" : "start.bat is"} feeding scans to the
+            dashboard. You can go back to Dashboard.
+          </p>
+        )}
+      </div>
+
+      {/* PORTABLE — hosted static site */}
+      <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="rounded-lg bg-emerald-600 p-2 text-white">
+            <Download className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">
+              Portable mode — run the scanner locally
+            </h2>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
+              Use this when FloorScope is opened from a hosted site (for example GitHub Pages) and
+              there is no <b>start.bat</b> or local server. The helper starts the <b>netsh</b> loop,
+              serves <b>scan.txt</b> on <b>127.0.0.1</b>, and opens this page connected to it.
+              Nothing is uploaded.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            onClick={downloadBridgeBat}
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
+          >
+            <Download className="h-4 w-4" />
+            Download Windows scanner (.bat)
+          </button>
+          {live.bridge && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+              <Link2 className="h-3.5 w-3.5" /> Bridge URL detected
+            </span>
+          )}
+        </div>
+
+        <ol className="mt-3 list-decimal space-y-1 pl-5 text-xs leading-relaxed text-slate-500">
+          <li>Close any older FloorScope scanner window so only one bridge is running.</li>
+          <li>
+            Double-click <b>floorscope-scanner.bat</b>. If Windows SmartScreen appears, choose{" "}
+            <b>More info → Run anyway</b>.
+          </li>
+          <li>Keep the scanner window open — it opens this page already pointed at the bridge.</li>
+          <li>
+            Click <b>Connect local scanner</b> and allow <b>local network access</b> when the
+            browser asks. Chrome/Edge only; Safari blocks loopback requests.
+          </li>
+        </ol>
+
+        {live.bridge && permission === "denied" && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-rose-800">
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-xs leading-relaxed">
+              Local network access is blocked for this site. Open the browser&apos;s site settings
+              and allow <b>Local network</b> / <b>Loopback network</b> access, then click Connect
+              again.
+            </p>
+          </div>
+        )}
+
+        {live.bridge && permission === "prompt" && (!live.watching || live.error) && (
+          <p className="mt-3 text-xs text-emerald-700">
+            The browser will ask for local network access when you click{" "}
+            <b>Connect local scanner</b>.
           </p>
         )}
       </div>
@@ -133,10 +219,13 @@ export function ScanImport({
             <Play className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">1 · Start the scan loop</h2>
+            <h2 className="text-sm font-semibold text-slate-900">
+              1 · Start the scan loop (local project)
+            </h2>
             <p className="mt-0.5 text-xs text-slate-500">
               Run this in PowerShell on your laptop. It overwrites <b>scan.txt</b> (in the folder
               where you started PowerShell) every 5 seconds, including which AP you're connected to.
+              On a hosted site, use the portable scanner above instead.
             </p>
           </div>
         </div>
@@ -168,7 +257,13 @@ export function ScanImport({
           <div>
             <h2 className="text-sm font-semibold text-slate-900">2 · Watch the file — live mode</h2>
             <p className="mt-0.5 text-xs text-slate-600">
-              {live.auto ? (
+              {live.bridge ? (
+                <>
+                  This page is pointed at the <b>local scanner bridge</b>. Click{" "}
+                  <b>Connect local scanner</b> to start reading <b>scan.txt</b> from{" "}
+                  <b>127.0.0.1</b>; the browser may ask for local network access first.
+                </>
+              ) : live.auto ? (
                 <>
                   Started by <b>start.bat</b> — FloorScope reads <b>scan.txt</b> straight from the
                   dev server and updates the dashboard the moment the loop writes a new scan.
@@ -195,9 +290,11 @@ export function ScanImport({
               {live.watching ? <Square className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
               {live.watching
                 ? "Stop watching"
-                : live.auto
-                  ? "Restart live watch"
-                  : "Pick scan.txt & go live"}
+                : live.bridge
+                  ? "Connect local scanner"
+                  : live.auto
+                    ? "Restart live watch"
+                    : "Pick scan.txt & go live"}
             </button>
 
             {live.watching && (
@@ -276,9 +373,10 @@ export function ScanImport({
       <div className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-relaxed text-slate-500">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
         <p>
-          Browsers can't scan WiFi directly — the loop + file-watch trick is what makes this live.
-          Everything stays on your machine; scan.txt is only read locally, never uploaded. For a
-          real fix to "sticky" devices across floors, enable 802.11k/v/r fast-roaming on your APs.
+          Browsers can't scan WiFi directly — the loop + file-watch trick (or the portable
+          loopback bridge) is what makes this live. Everything stays on your machine; scan.txt is
+          only read locally, never uploaded. For a real fix to "sticky" devices across floors,
+          enable 802.11k/v/r fast-roaming on your APs.
         </p>
       </div>
     </div>
