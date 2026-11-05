@@ -103,12 +103,15 @@ function serveScanFile(): Plugin {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: process.env.GITHUB_PAGES === "true" ? "/wifi-roaming-signal-analyzer/" : "/",
+export default defineConfig(({ command }) => ({
+  // Dev server stays at the root path; production builds use relative asset
+  // paths so the same bundle works on GitHub Pages (project subpath) or any
+  // other static host without environment-specific configuration.
+  base: command === "build" ? "./" : "/",
   plugins: [react(), tailwindcss(), serveScanFile()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
     },
   },
-});
+}));
