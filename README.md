@@ -94,7 +94,7 @@ window open while analyzing; closing it stops both the loop and the bridge.
 FloorScope is organized into three focused tabs:
 
 ### 1. Dashboard
-- **Active Network & Floor Selector:** Filter by SSID, switch chart scopes, and set your current location ("Building" and "Floor").
+- **Active Network & Floor Selector:** Filter by SSID and set your current location ("Building" and "Floor"). The signal-history chart follows the selected SSID.
 - **Best AP Hero Card:** Displays the strongest AP for the active network, showing signal in dBm, qualitative rating (Excellent, Good, Fair, Weak, Poor), channel, frequency band (2.4 GHz, 5 GHz, 6 GHz), and 802.11 radio protocol.
 - **Roaming Check & Event Log:** Immediate feedback on connection state (Optimal, Sticky Client, or Wrong Floor attachment) and a chronological list of recent roams and disconnects.
 - **Signal History Timeline:** Live multi-series SVG chart tracking signal trends over time.
@@ -138,10 +138,15 @@ wifi-roaming-signal-analyzer/
 │   ├── App.tsx                   # Main layout and tab navigation
 │   ├── components/
 │   │   ├── Dashboard.tsx         # Dashboard view (hero, roam check, AP ranking)
+│   │   ├── DashboardControls.tsx # SSID, location, and live status controls
 │   │   ├── DevicesPanel.tsx      # Physical hardware grouping (middle octet heuristic)
+│   │   ├── AllApsList.tsx        # Ranked APs on the selected SSID
+│   │   ├── OtherNetworks.tsx     # Nearby networks on other SSIDs
+│   │   ├── RoamPanel.tsx         # Roaming alerts, connection selector, and event log
 │   │   ├── LiveHistoryChart.tsx  # SVG signal-over-time timeline
 │   │   ├── RegistryManager.tsx   # AP location registry table
 │   │   ├── ScanImport.tsx        # Ingest controls, scan loop copy, paste/drop
+│   │   ├── SignalHero.tsx        # Strongest AP summary card
 │   │   ├── SignalBars.tsx        # Signal visualizer bars
 │   │   └── BandTag.tsx           # Frequency band badges (2.4G / 5G / 6G)
 │   ├── lib/
@@ -164,4 +169,3 @@ wifi-roaming-signal-analyzer/
 ## License
 
 Private / Internal utility.
-

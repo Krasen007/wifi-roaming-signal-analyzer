@@ -7,17 +7,17 @@
 
 ### 1.2 Discrepancies & Unfinished Items (Found in Codebase Audit)
 
-1. **Unsplit Dashboard God Component:** Prior documentation claimed `Dashboard.tsx` had been decomposed into `DashboardControls.tsx`, `AllApsList.tsx`, and `OtherNetworks.tsx` (~87 lines). **In reality, `Dashboard.tsx` is still an undivided 514-line monolithic component** implementing controls, hero verdict, roam logging, chart embedding, device list, same-network ranking, and other network lists in a single file.
-2. **Orphaned Dead Component:** `src/components/ChannelChart.tsx` is still present on disk despite being unreferenced by any component or route.
-3. **Over-Engineered Chart (Deferred):** `LiveHistoryChart.tsx` remains ~307 lines with complex SVG gap connectors, focus modes, and color palette hashing.
+1. **Dashboard Decomposition (Completed):** Dashboard controls, signal hero, roaming check, same-SSID AP ranking, and neighboring networks are implemented in and imported from their dedicated component files. `Dashboard.tsx` coordinates those components with the history chart and physical-device panel.
+2. **Chart Scope:** The history timeline is scoped to the selected SSID so neighboring networks do not introduce a second charting model.
+3. **Over-Engineered Chart (Deferred):** `LiveHistoryChart.tsx` has complex SVG gap connectors, focus modes, and color palette hashing.
 
 ---
 
 ### 2.2 Taste Weaknesses & Anti-Pattern Risks
 
 1. **The Feature Factory Temptation:** Prior additions (such as the Channels tab and sample data) added UI noise and cognitive overhead without answering the primary question: _"Which floor am I on, and am I attached to the right AP?"_
-2. **God Component Density:** `Dashboard.tsx` handles multiple independent domains: network selection, building/floor inputs, hero scorecards, roaming logic, roam history lists, ranking, and neighbor networks.
-3. **Dead Weight in Repository:** Unreferenced components (`ChannelChart.tsx`) create cognitive drag and maintenance ambiguity.
+2. **Dashboard Coordination:** Keep `Dashboard.tsx` focused on selected-network state, derived data, and composing the extracted dashboard components.
+3. **Dead Weight in Repository:** Keep component files either in active use or remove them; avoid parallel implementations that create maintenance ambiguity.
 
 ---
 
@@ -47,13 +47,7 @@ Before adding or modifying any feature, abstraction, or dependency, apply this c
 
 ### Phase 1: High Priority (Immediate Cleanup)
 
-- [ ] **Delete Orphaned Component:** Remove unreferenced `src/components/ChannelChart.tsx`.
-- [ ] **Decompose `Dashboard.tsx`:** Extract the 514-line monolithic component into clear, isolated units:
-  - `DashboardControls.tsx`: SSID selection, current building/floor input fields, and live status badge.
-  - `SignalHero.tsx`: Best AP card, signal strength, and dBm status.
-  - `RoamPanel.tsx`: Sticky-client alerts, wrong floor/building alerts, connection selector, and roam event log.
-  - `AllApsList.tsx`: Ranked table/cards of same-SSID access points with signal deltas.
-  - `OtherNetworks.tsx`: Collapsed/compact view of adjacent SSIDs.
+- [x] **Decompose `Dashboard.tsx`:** Extract controls, signal hero, roaming check, same-SSID AP ranking, and neighboring networks into dedicated imported components.
 
 ### Phase 2: Medium Priority (Chart Calibration)
 
