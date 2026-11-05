@@ -53,6 +53,10 @@ When FloorScope is served as a static site (for example GitHub Pages), there is 
 server to read `scan.txt`. Open the deployed site, go to **Live setup**, and click
 **Download Windows scanner (.bat)**.
 
+Pushes to `main` build and deploy the site through GitHub Actions. In the repository's
+**Settings → Pages**, set the build and deployment source to **GitHub Actions**. The Pages build
+uses the repository subpath automatically; local development continues to use the root path.
+
 Double-click the downloaded `floorscope-scanner.bat`. It:
 
 1. starts the `netsh` scan loop writing to `%LOCALAPPDATA%\FloorScope\scan.txt`,
