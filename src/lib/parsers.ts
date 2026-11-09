@@ -106,15 +106,29 @@ function currentSssidSafe(s: string) {
   return s || "(hidden)";
 }
 
+/** Isolate the `netsh wlan show interfaces` part of a combined scan file.
+ *  The networks list above it also contains `BSSID:` lines (colocated APs), and
+ *  picking the first of those would report a random neighbour as "connected". */
+function interfacesSection(text: string): string | null {
+  const re = /There (?:is|are) \d+ interfaces? on the system/gi;
+  let idx = -1;
+  for (let m = re.exec(text); m; m = re.exec(text)) idx = m.index;
+  return idx >= 0 ? text.slice(idx) : null;
+}
+
 /** Windows: netsh wlan show interfaces → which AP we're actually on.
  *  Newer Windows 11 builds label the field "AP BSSID" instead of "BSSID".
  *  Returns an empty bssid when the interface is present but disconnected, so
  *  the app can mark connection drops in the live chart. */
 function parseInterfaces(text: string): ConnectedInfo | undefined {
-  const state = text.match(/^\s*State\s+:\s*(.+)$/mi)?.[1]?.trim() ?? null;
+  const section = interfacesSection(text);
+  if (!section) return undefined;
+  const state = section.match(/^\s*State\s+:\s*(.+)$/mi)?.[1]?.trim() ?? null;
   if (state && !/connected/i.test(state)) return { bssid: "", state };
-  const bssidRaw = text
-    .match(/^\s*(?:AP\s+)?BSSID\s+:\s*((?:[0-9a-f]{2}:){5}[0-9a-f]{2})/mi)?.[1];
+  // Require the MAC to be the whole value so colocated-AP lines
+  // (`BSSID: aa:..., Band: 6 GHz`) are never mistaken for the interface BSSID.
+  const bssidRaw = section
+    .match(/^\s*(?:AP\s+)?BSSID\s*:\s*((?:[0-9a-f]{2}:){5}[0-9a-f]{2})[^\S\r\n]*$/mi)?.[1];
   if (!bssidRaw) return undefined;
   return { bssid: normalizeBssid(bssidRaw), state };
 }

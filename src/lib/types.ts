@@ -29,7 +29,8 @@ export interface SamplePoint {
 
 export type History = Record<string, SamplePoint[]>;
 
-export const MAX_HISTORY_POINTS = 120;
+/** Kept per AP: enough to cover the chart's 20-minute window at a 5 s scan loop. */
+export const MAX_HISTORY_POINTS = 300;
 
 /** Fired when the connected BSSID changes (a roam between APs).
  *  `to` is empty when the connection dropped instead of roaming. */

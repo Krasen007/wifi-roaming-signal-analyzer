@@ -15,6 +15,9 @@ function colorFor(bssid: string): string {
 const Y_MIN = -95;
 const Y_MAX = -30;
 
+/** Sliding window: the chart only ever shows the most recent 20 minutes. */
+const WINDOW_MS = 20 * 60 * 1000;
+
 interface RealPoint {
   t: number;
   dbm: number;
@@ -53,6 +56,7 @@ export function LiveHistoryChart({
   registry,
   bandOf,
   connectionEvents,
+  onClear,
 }: {
   history: History;
   match: (bssid: string) => boolean;
@@ -60,22 +64,31 @@ export function LiveHistoryChart({
   registry: Registry;
   bandOf: (bssid: string) => Band;
   connectionEvents: RoamEvent[];
+  onClear?: () => void;
 }) {
   const [focus, setFocus] = useState<string | null>(null);
 
-  const series = Object.entries(history)
-    .filter(([bssid, pts]) => match(bssid) && pts.some((p) => p.dbm != null))
-    .map(([bssid, pts]) => {
-      const sliced = pts.slice(-120);
-      const reals = sliced.filter((p) => p.dbm != null);
+  const matched = Object.entries(history).filter(([bssid]) => match(bssid));
+  let windowEnd = -Infinity;
+  for (const [, pts] of matched) {
+    for (const p of pts) if (p.t > windowEnd) windowEnd = p.t;
+  }
+  if (!Number.isFinite(windowEnd)) return null;
+
+  const windowStart = windowEnd - WINDOW_MS;
+  const series = matched
+    .map(([bssid, allPts]) => {
+      const pts = allPts.filter((p) => p.t >= windowStart && p.t <= windowEnd);
+      const reals = pts.filter((p) => p.dbm != null);
       return {
         bssid,
-        pts: sliced,
+        pts,
         lastReal: reals.length > 0 ? reals[reals.length - 1] : null,
-        inRange: sliced.length > 0 && sliced[sliced.length - 1].dbm != null,
-        segments: splitSegments(sliced),
+        inRange: pts.length > 0 && pts[pts.length - 1].dbm != null,
+        segments: splitSegments(pts),
       };
     })
+    .filter((s) => s.pts.some((p) => p.dbm != null))
     .sort((a, b) => (b.lastReal?.dbm ?? -999) - (a.lastReal?.dbm ?? -999));
 
   if (series.length === 0) return null;
@@ -87,10 +100,9 @@ export function LiveHistoryChart({
   const PAD_T = 10;
   const PAD_B = 22;
 
-  const xMax = Math.max(...series.map((s) => s.pts[s.pts.length - 1]?.t ?? 0));
-  const xMin = Math.min(...series.map((s) => s.pts[0]?.t ?? 0));
-  const span = Math.max(xMax - xMin, 30_000);
-  const x0 = xMax - span;
+  const xMax = windowEnd;
+  const x0 = windowStart;
+  const span = WINDOW_MS;
 
   const x = (t: number) => PAD_L + ((t - x0) / span) * (W - PAD_L - PAD_R);
   const y = (dbm: number) => PAD_T + (1 - (dbm - Y_MIN) / (Y_MAX - Y_MIN)) * (H - PAD_T - PAD_B);
@@ -115,14 +127,24 @@ export function LiveHistoryChart({
             legend chip to isolate it.
           </p>
         </div>
-        {focus && (
-          <button
-            onClick={() => setFocus(null)}
-            className="shrink-0 rounded-lg border border-indigo-200 px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
-          >
-            Show all
-          </button>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {focus && (
+            <button
+              onClick={() => setFocus(null)}
+              className="rounded-lg border border-indigo-200 px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
+            >
+              Show all
+            </button>
+          )}
+          {onClear && (
+            <button
+              onClick={onClear}
+              className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+            >
+              Clear chart
+            </button>
+          )}
+        </div>
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-4 h-72 w-full md:h-80" preserveAspectRatio="none">

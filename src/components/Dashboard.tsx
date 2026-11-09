@@ -25,6 +25,7 @@ export function Dashboard({
   lastSeenSsid,
   lastSeenBand,
   roams,
+  onClearHistory,
 }: {
   aps: AccessPoint[];
   registry: Registry;
@@ -39,6 +40,7 @@ export function Dashboard({
   lastSeenSsid: Record<string, string>;
   lastSeenBand: Record<string, Band>;
   roams: RoamEvent[];
+  onClearHistory: () => void;
 }) {
   const ssids = useMemo(() => Array.from(new Set(aps.map((a) => a.ssid))).sort(), [aps]);
   const defaultSsid = aps[0]?.ssid ?? "";
@@ -52,6 +54,10 @@ export function Dashboard({
   );
   const strongest = myAps[0];
   const connected = aps.find((a) => a.bssid === connectedBssid);
+  // Show the AP we're actually attached to; only fall back to the strongest
+  // when the connected AP isn't on the selected network (or isn't visible).
+  const connectedOnActive = connected && connected.ssid === activeSsid ? connected : undefined;
+  const heroAp = connectedOnActive ?? strongest;
 
   const { floors, buildings } = useMemo(() => {
     const { floors: f, buildings: b } = registryValueSets(registry);
@@ -100,9 +106,14 @@ export function Dashboard({
       />
 
       {/* Hero + verdict */}
-      {strongest && (
+      {heroAp && (
         <div className="grid gap-5 lg:grid-cols-3">
-          <SignalHero strongest={strongest} activeSsid={activeSsid} registry={registry} />
+          <SignalHero
+            strongest={heroAp}
+            activeSsid={activeSsid}
+            registry={registry}
+            isConnected={Boolean(connectedOnActive)}
+          />
           <RoamPanel
             connected={connected}
             strongest={strongest}
@@ -125,6 +136,7 @@ export function Dashboard({
         registry={registry}
         bandOf={bandOf}
         connectionEvents={roams}
+        onClear={onClearHistory}
       />
 
       <DevicesPanel

@@ -60,6 +60,11 @@ export default function App() {
     saveConnected(b);
   }, []);
 
+  const clearHistory = useCallback(() => {
+    setHistory({});
+    setRoams([]);
+  }, []);
+
   const recordScan = useCallback((parsed: AccessPoint[]) => {
     if (parsed.length === 0) return;
     setAps(parsed);
@@ -247,6 +252,7 @@ export default function App() {
             lastSeenSsid={lastSeenSsid}
             lastSeenBand={lastSeenBand}
             roams={roams}
+            onClearHistory={clearHistory}
           />
         )}
         {tab === "import" && (
