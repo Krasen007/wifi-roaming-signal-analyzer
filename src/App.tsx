@@ -118,6 +118,24 @@ export default function App() {
       for (const ap of parsed) next[ap.bssid] = ap.band;
       return next;
     });
+    // Remember the last-seen band per BSSID in the registry so offline/old
+    // entries still show whether they were 2.4 / 5 / 6 GHz. Location fields
+    // are preserved; only the band is merged in.
+    setRegistry((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const ap of parsed) {
+        if (prev[ap.bssid]?.band === ap.band) continue;
+        next[ap.bssid] = {
+          ...(prev[ap.bssid] ?? { bssid: ap.bssid, building: "", floor: "", location: "" }),
+          bssid: ap.bssid,
+          band: ap.band,
+        };
+        changed = true;
+      }
+      if (changed) saveRegistry(next);
+      return changed ? next : prev;
+    });
   }, []);
 
   const ingestText = useCallback(

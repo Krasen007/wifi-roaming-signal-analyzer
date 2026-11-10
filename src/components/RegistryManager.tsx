@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
-import type { AccessPoint, Registry, RegistryEntry } from "../lib/types";
+import type { AccessPoint, Band, Registry, RegistryEntry } from "../lib/types";
 import { BandTag } from "./BandTag";
 import { SignalBars } from "./SignalBars";
 import { cn } from "../utils/cn";
 
 import { registryValueSets } from "../lib/labels";
 
-type SortKey = "signal" | "bssid" | "ssid" | "building" | "floor" | "location";
+type SortKey = "signal" | "bssid" | "ssid" | "band" | "building" | "floor" | "location";
 type SortDir = "asc" | "desc";
 type SortState = { key: SortKey; dir: SortDir };
 type Row = { bssid: string; ap?: AccessPoint; entry?: RegistryEntry };
@@ -28,6 +28,8 @@ function rowText(row: Row, key: SortKey): string {
       return row.entry?.floor ?? "";
     case "location":
       return row.entry?.location ?? "";
+    case "band":
+      return row.entry?.band ?? row.ap?.band ?? "";
     default:
       return "";
   }
@@ -91,7 +93,8 @@ export function RegistryManager({
     const prev = registry[bssid] ?? { bssid, building: "", floor: "", location: "" };
     const next: RegistryEntry = { ...prev, ...patch, bssid };
     const r = { ...registry, [bssid]: next };
-    if (!next.building && !next.floor && !next.location) delete r[bssid];
+    // Keep the entry if it has a remembered band, even without a location.
+    if (!next.building && !next.floor && !next.location && !next.band) delete r[bssid];
     onChange(r);
   };
 
@@ -154,6 +157,7 @@ export function RegistryManager({
                 onSort={toggleSort}
               />
               <SortableTh label="SSID" sortKey="ssid" sort={sort} onSort={toggleSort} />
+              <SortableTh label="Band" sortKey="band" sort={sort} onSort={toggleSort} />
               <SortableTh label="Building" sortKey="building" sort={sort} onSort={toggleSort} />
               <SortableTh label="Floor" sortKey="floor" sort={sort} onSort={toggleSort} />
               <SortableTh label="Location" sortKey="location" sort={sort} onSort={toggleSort} />
@@ -163,14 +167,22 @@ export function RegistryManager({
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-400">
                   No APs yet — import a scan first, or add a BSSID manually below.
                 </td>
               </tr>
             )}
             {rows.map((row) => {
-              const registered = !!(row.entry?.building || row.entry?.floor || row.entry?.location);
+              const registered = !!(
+                row.entry?.building ||
+                row.entry?.floor ||
+                row.entry?.location ||
+                row.entry?.band
+              );
               const isConnected = row.bssid === connectedBssid;
+              // Remembered band takes precedence (shows for offline APs too),
+              // falling back to the band from the current scan.
+              const band: Band | undefined = row.entry?.band ?? row.ap?.band;
               return (
                 <tr
                   key={row.bssid}
@@ -196,7 +208,7 @@ export function RegistryManager({
                   <td className="px-4 py-2 font-mono text-xs text-slate-700">
                     <div className="flex items-center gap-2">
                       {row.bssid}
-                      {row.ap && <BandTag band={row.ap.band} />}
+                      {band && <BandTag band={band} />}
                       {isConnected && (
                         <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
                           CONNECTED

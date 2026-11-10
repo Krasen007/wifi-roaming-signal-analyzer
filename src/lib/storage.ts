@@ -1,4 +1,4 @@
-import type { Registry, WiredRegistry } from "./types";
+import type { Band, Registry, WiredRegistry } from "./types";
 
 const KEY = "floorscope.registry.v1";
 const WIRED_KEY = "floorscope.wiredRegistry.v1";
@@ -7,6 +7,8 @@ const CUR_BUILDING = "floorscope.currentBuilding.v1";
 const CONNECTED = "floorscope.connectedBssid.v1";
 
 type StoredEntry = Partial<Registry[string]> & { name?: string };
+
+const VALID_BANDS = new Set<Band>(["2.4", "5", "6", "?"]);
 
 function warnStorage(op: string, err: unknown) {
   console.warn(`[storage] ${op} failed`, err);
@@ -48,9 +50,13 @@ export function loadRegistry(): Registry {
           : "";
     const building = typeof entry.building === "string" ? entry.building : "";
     const floor = typeof entry.floor === "string" ? entry.floor : "";
+    const band =
+      typeof entry.band === "string" && VALID_BANDS.has(entry.band as Band)
+        ? entry.band
+        : undefined;
 
-    if (building || floor || location) {
-      registry[bssid] = { bssid, building, floor, location };
+    if (building || floor || location || band) {
+      registry[bssid] = { bssid, building, floor, location, ...(band ? { band } : {}) };
     }
   }
 
