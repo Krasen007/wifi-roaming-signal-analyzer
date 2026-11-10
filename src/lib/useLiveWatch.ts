@@ -27,7 +27,7 @@ export interface LiveWatch {
  * text whenever the file changes. Poll cadence is fixed at ~1.2 s, far faster
  * than the user's 5 s write loop, so every new scan is picked up quickly.
  *
- * When the app is opened with `?live=<file>` — that's what `start.bat` does — the
+ * When the app is opened with `?live=<file>` — that's what `start-wifi.bat` does — the
  * source is the dev server instead of the file picker, and watching starts on load.
  */
 export function useLiveWatch(onText: (text: string) => void): LiveWatch {

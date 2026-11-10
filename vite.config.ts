@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Launcher helper used by `start.bat`, for both the dev server and the
+ * Launcher helper used by the local mode-specific launchers, for both the dev server and the
  * production preview server.
  *
  * Two jobs:

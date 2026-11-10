@@ -394,7 +394,7 @@ export function WiredPanel({
                 </p>
                 <p className="text-amber-800/80">
                   To get the exact switch and port, install <b>Wireshark</b> (which includes{" "}
-                  <b>tshark</b> + Npcap) and restart the scanner (<b>start.bat</b> or the portable
+                  <b>tshark</b> + Npcap) and restart the scanner (<b>start-wired.bat</b> or the portable
                   .bat) — it captures LLDP once at startup and waits up to 40 seconds for the next
                   advertisement. Many enterprise switches also have LLDP disabled on access ports,
                   so this depends on the network.
@@ -465,7 +465,7 @@ export function WiredPanel({
         <div className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-relaxed text-slate-500">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
           <p>
-            No wired snapshot yet. Use <b>start.bat</b>, the portable scanner, or paste{" "}
+            No wired snapshot yet. Use <b>start-wired.bat</b>, the portable scanner, or paste{" "}
             <code>ipconfig /all</code> plus <code>arp -a</code> below to inspect the LAN.
           </p>
         </div>

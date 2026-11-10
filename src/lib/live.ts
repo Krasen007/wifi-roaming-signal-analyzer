@@ -49,7 +49,8 @@ function isLoopbackUrl(url: string): boolean {
 
 /**
  * Live mode can be bootstrapped by the launcher or the portable bridge:
- *  - `start.bat` opens `?live=scan.txt`, served by the local Vite server.
+ *  - `start-wifi.bat` opens `?live=scan.txt` and `start-wired.bat` opens
+ *    `?wired=wired.txt`, served by the local Vite server.
  *  - the downloaded scanner `.bat` opens `?live=http://127.0.0.1:<port>/<token>/scan.txt`.
  * Returns null when the app was opened without the parameter (normal manual flow).
  */
@@ -77,7 +78,7 @@ function sourceFromParam(name: "live" | "wired"): HttpSource | null {
 
   if (raw === "" || raw === "1") {
     // A relative file only makes sense when the app itself is served locally
-    // (start.bat / Vite). On a hosted site it would just 404.
+    // (the local launchers / Vite). On a hosted site it would just 404.
     return localPage ? { url: `/${defaultFile}`, name: defaultFile, bridge: false } : null;
   }
 
@@ -109,7 +110,7 @@ function sourceFromParam(name: "live" | "wired"): HttpSource | null {
 
 /**
  * WatchHandle backed by a plain HTTP GET: no user gesture or permission needed
- * for same-origin sources, so `start.bat` can go live the moment it loads.
+ * for same-origin sources, so the local launchers can go live on page load.
  *
  * Loopback bridges additionally need `targetAddressSpace: "loopback"` so the
  * browser exempts them from mixed-content blocking (Chrome 142+ Local Network
@@ -148,7 +149,7 @@ export function httpScanHandle(src: HttpSource): WatchHandle {
       const contentType = res.headers.get("content-type") ?? "";
       if (contentType.includes("text/html")) {
         throw new LiveSourceError(
-          `This server doesn't serve ${src.name} - use start.bat or the portable scanner.`
+          `This server doesn't serve ${src.name} - use a local launcher or the portable scanner.`
         );
       }
       const text = await res.text();

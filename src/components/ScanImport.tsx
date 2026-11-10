@@ -79,8 +79,8 @@ export function ScanImport({
             <h2 className="text-sm font-semibold text-slate-900">What this tab is for</h2>
             <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
               This tab is the <b>data source</b> for the dashboard — it controls how FloorScope
-              reads <b>scan.txt</b>. When you launch with <b>start.bat</b>, the scan loop and live
-              mode are already running. On a hosted site (e.g. GitHub Pages), use the Wi-Fi{" "}
+              reads <b>scan.txt</b>. When you launch with <b>start-wifi.bat</b>, the scan loop and
+              live mode are already running. On a hosted site (e.g. GitHub Pages), use the Wi-Fi{" "}
               <b>portable scanner</b> below. Wired LAN scanning has its own scanner in the Wired
               tab.
             </p>
@@ -97,7 +97,7 @@ export function ScanImport({
                   ? "connected to local scanner"
                   : "click Connect below"
                 : live.auto
-                  ? "started by start.bat"
+                  ? "started by start-wifi.bat"
                   : "you pick the file"
             }
           />
@@ -144,7 +144,7 @@ export function ScanImport({
         {(live.auto || live.bridge) && live.watching && (
           <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-700">
             <Check className="h-3.5 w-3.5" /> All set —{" "}
-            {live.bridge ? "the local scanner bridge is" : "start.bat is"} feeding scans to the
+            {live.bridge ? "the local scanner bridge is" : "start-wifi.bat is"} feeding scans to the
             dashboard. You can go back to Dashboard.
           </p>
         )}
@@ -265,8 +265,8 @@ export function ScanImport({
         </div>
         <p className="mt-2 text-xs text-slate-400">
           Leave the PowerShell window open while you walk around. Stop it with Ctrl+C when done.
-          Or just run <b>start.bat</b> in the project folder — it starts this loop, the dev server
-          and live mode in one go.
+          Or just run <b>start-wifi.bat</b> in the project folder — it starts this loop, the
+          preview server and live mode in one go.
         </p>
       </div>
 
@@ -286,7 +286,7 @@ export function ScanImport({
                 </>
               ) : live.auto ? (
                 <>
-                  Started by <b>start.bat</b> — FloorScope reads <b>scan.txt</b> straight from the
+                  Started by <b>start-wifi.bat</b> — FloorScope reads <b>scan.txt</b> straight from the
                   dev server and updates the dashboard the moment the loop writes a new scan.
                 </>
               ) : (

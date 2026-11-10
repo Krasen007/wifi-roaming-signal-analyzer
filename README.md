@@ -21,7 +21,7 @@ Operating systems only show the network name (SSID). FloorScope inspects the phy
 
 ## Key Features
 
-- **Automated Live Scanning:** Starts with a single click via `start.bat`. A background PowerShell loop queries Windows `netsh` and feeds real-time scans directly into the web UI without manual file prompts.
+- **Automated Live Scanning:** Start Wi-Fi or wired scanning separately with `start-wifi.bat` or `start-wired.bat`. Each starts only its scan loop and opens the matching live app view.
 - **Sticky Client Detection:** Compares your active connection against all visible APs on the same SSID. If a neighbor AP is significantly stronger ($\ge 8\text{ dBm}$ difference), FloorScope flags a sticky-client warning.
 - **Wrong-Floor Attachment Alerts:** Set your current building and floor; FloorScope verifies whether your connected AP matches your physical location based on your mapped AP registry.
 - **Physical Device Disambiguation:** Enterprise APs typically broadcast multiple SSIDs and bands across the same physical hardware, sharing middle BSSID octets (`xx:AA:BB:CC:DD:yy`). FloorScope groups these into unified hardware units (`D1`, `D2`, etc.), so you know how many distinct access points are actually nearby.
@@ -34,17 +34,18 @@ Operating systems only show the network name (SSID). FloorScope inspects the phy
 
 ## Quick Start (Windows)
 
-### Option 1: One-Click Launch (Recommended)
+### Option 1: One-Click Local Launch (Recommended)
 
-Double-click `start.bat` in the repository root.
+Choose the scanner you need in the repository root:
 
-The launcher script automatically:
-1. Checks and installs npm dependencies if missing (`npm install`).
-2. Starts the background PowerShell loop writing `scan.txt` (Wi-Fi) and `wired.txt` (LAN) every 5 seconds. If Wireshark/Npcap is installed, it also captures **LLDP** once at startup into `lldp.txt`.
-3. Launches the Vite server with custom scan-serving middleware.
-4. Opens your default browser at `http://localhost:<port>/?live=scan.txt&wired=wired.txt` with live streaming already active.
+- Double-click `start-wifi.bat` to run only the Wi-Fi scan loop and open the app with
+  `?live=scan.txt`.
+- Double-click `start-wired.bat` to run only the wired scan loop (and one-shot LLDP capture)
+  and open the app with `?wired=wired.txt`.
 
-*To stop FloorScope, close the spawned PowerShell and server command windows.*
+Each launcher checks and installs npm dependencies if needed, starts the Vite preview server,
+and opens the matching app view. Close the scan-loop and server windows to stop it. Run one
+local launcher at a time; use the portable scanners if you need both modes running concurrently.
 
 ---
 
@@ -142,7 +143,7 @@ FloorScope is organized into four focused tabs:
 - **Switch identity:** when LLDP/CDP is heard, shows switch name, exact port, management IP, VLAN and chassis ID. Without LLDP it explains why and still records the socket + gateway.
 - **LAN neighbours:** ARP/`Get-NetNeighbor` table with vendor hints and a gateway marker.
 - **Port map:** save each wall socket with building/floor/room, switch/port/VLAN and notes. Cross-checks the current building/floor against the AP registry, so you can see whether the wired socket and the Wi-Fi AP are in the same area.
-- Works from the portable scanner (`wired.txt`), `start.bat`, or a manual paste of `ipconfig /all` + `arp -a`.
+- Works from the portable scanner (`wired.txt`), `start-wired.bat`, or a manual paste of `ipconfig /all` + `arp -a`.
 
 ---
 
@@ -160,7 +161,8 @@ FloorScope is organized into four focused tabs:
 
 ```text
 wifi-roaming-signal-analyzer/
-├── start.bat                     # Single-click launcher (PowerShell loop + Vite server)
+├── start-wifi.bat                # Wi-Fi scan loop + Vite server
+├── start-wired.bat               # Wired scan loop + LLDP capture + Vite server
 ├── scripts/
 │   ├── lldp-capture.ps1          # One-shot LLDP capture via tshark (optional, needs Wireshark/Npcap)
 │   └── wired-snapshot.ps1        # One-shot wired/LAN snapshot (adapter, gateway, ARP table)
