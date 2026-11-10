@@ -127,36 +127,30 @@ try {
 } catch { }`;
 
 /**
- * Build a self-contained Windows batch file that:
- *   1. runs netsh every 5 s into %LOCALAPPDATA%\FloorScope\scan.txt,
- *   2. serves that file on loopback via a tiny HTTP server, and
- *   3. opens the hosted FloorScope page with `?live=<bridge url>`.
+ * Build a self-contained Windows batch file for one scanner mode. It starts
+ * only that scan loop, serves only its output behind a random token, and opens
+ * the matching live view.
  *
  * The PowerShell payload lives after the PS_MARKER line and is read back out
  * of the batch file, so there is no fragile quoting or -EncodedCommand blob.
  * HttpListener is used instead of a hand-rolled TCP server: Defender/AMSI
  * blocks the raw variant as malicious on current Windows builds.
  */
-export function buildBridgeBat(opts: { origin: string; siteUrl: string; token: string }): string {
+export function buildBridgeBat(opts: {
+  origin: string;
+  siteUrl: string;
+  token: string;
+  mode: "wifi" | "wired";
+}): string {
   const origin = psQuote(opts.origin);
   const siteUrl = psQuote(opts.siteUrl);
   const token = psQuote(opts.token);
-
-  const ps = `$ErrorActionPreference = 'Stop'
-$token = '${token}'
-$origin = '${origin}'
-$siteUrl = '${siteUrl}'
-$baseDir = [Environment]::GetFolderPath('LocalApplicationData')
-if ([string]::IsNullOrWhiteSpace($baseDir)) { $baseDir = $env:TEMP }
-$scanDir = Join-Path $baseDir 'FloorScope'
-New-Item -ItemType Directory -Force -Path $scanDir | Out-Null
-$scanFile = Join-Path $scanDir 'scan.txt'
-$scanTmp = Join-Path $scanDir 'scan.tmp'
-$wiredFile = Join-Path $scanDir 'wired.txt'
-$wiredTmp = Join-Path $scanDir 'wired.tmp'
-$lldpFile = Join-Path $scanDir 'lldp.txt'
-
-$loop = {
+  const fileName = opts.mode === "wifi" ? "scan.txt" : "wired.txt";
+  const queryParam = opts.mode === "wifi" ? "live" : "wired";
+  const title = opts.mode === "wifi" ? "Wi-Fi" : "wired";
+  const worker =
+    opts.mode === "wifi"
+      ? `$loop = {
   param($file, $tmp)
   while ($true) {
     try {
@@ -178,15 +172,14 @@ $loop = {
   }
 }
 
-$ps = [PowerShell]::Create()
-$null = $ps.AddScript($loop).AddArgument($scanFile).AddArgument($scanTmp)
-$null = $ps.BeginInvoke()
-
-$wiredScript = @'
+$psScan = [PowerShell]::Create()
+$null = $psScan.AddScript($loop).AddArgument($dataFile).AddArgument($dataTmp)
+$null = $psScan.BeginInvoke()`
+      : `$wiredScript = @'
 ${WIRED_SNAPSHOT_PS}
 '@
 $psWired = [PowerShell]::Create()
-$null = $psWired.AddScript($wiredScript).AddArgument($wiredFile).AddArgument($wiredTmp).AddArgument($lldpFile)
+$null = $psWired.AddScript($wiredScript).AddArgument($dataFile).AddArgument($dataTmp).AddArgument($lldpFile)
 $null = $psWired.BeginInvoke()
 
 $lldpScript = @'
@@ -194,7 +187,23 @@ ${LLDP_CAPTURE_PS}
 '@
 $psLldp = [PowerShell]::Create()
 $null = $psLldp.AddScript($lldpScript).AddArgument($lldpFile)
-$null = $psLldp.BeginInvoke()
+$null = $psLldp.BeginInvoke()`;
+
+  const ps = `$ErrorActionPreference = 'Stop'
+$origin = '${origin}'
+$siteUrl = '${siteUrl}'
+$baseDir = [Environment]::GetFolderPath('LocalApplicationData')
+if ([string]::IsNullOrWhiteSpace($baseDir)) { $baseDir = $env:TEMP }
+$scanDir = Join-Path $baseDir 'FloorScope'
+New-Item -ItemType Directory -Force -Path $scanDir | Out-Null
+$dataFile = Join-Path $scanDir '${fileName}'
+$dataTmp = Join-Path $scanDir '${fileName.replace(".txt", ".tmp")}'
+$lldpFile = Join-Path $scanDir 'lldp.txt'
+$psScan = $null
+$psWired = $null
+$psLldp = $null
+
+${worker}
 
 $probe = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
 $probe.Start()
@@ -214,21 +223,21 @@ foreach ($candidate in @('127.0.0.1', 'localhost')) {
   } catch { }
 }
 if ($null -eq $listener) {
-  try { $ps.Stop(); $ps.Dispose() } catch { }
+  try { if ($psScan) { $psScan.Stop(); $psScan.Dispose() } } catch { }
+  try { if ($psWired) { $psWired.Stop(); $psWired.Dispose() } } catch { }
+  try { if ($psLldp) { $psLldp.Stop(); $psLldp.Dispose() } } catch { }
   throw 'Could not start the local scanner listener. Try running the .bat as administrator.'
 }
 
-$bridgeUrl = 'http://' + $bridgeHost + ':' + $port + '/${token}/scan.txt'
-$wiredUrl = 'http://' + $bridgeHost + ':' + $port + '/${token}/wired.txt'
-$openUrl = $siteUrl + '?live=' + [uri]::EscapeDataString($bridgeUrl) + '&wired=' + [uri]::EscapeDataString($wiredUrl)
+$bridgeUrl = 'http://' + $bridgeHost + ':' + $port + '/${token}/${fileName}'
+$bridgePath = '/${token}/${fileName}'
+$openUrl = $siteUrl + '?${queryParam}=' + [uri]::EscapeDataString($bridgeUrl)
 
 Write-Host ''
-Write-Host 'FloorScope scanner bridge'
+Write-Host 'FloorScope ${title} scanner bridge'
 Write-Host '-------------------------'
-Write-Host ('Scan file : ' + $scanFile)
-Write-Host ('Wired file: ' + $wiredFile)
+Write-Host ('Output file: ' + $dataFile)
 Write-Host ('Bridge    : ' + $bridgeUrl)
-Write-Host ('Wired URL : ' + $wiredUrl)
 Write-Host ('Opening   : ' + $openUrl)
 Write-Host ''
 Write-Host 'In the browser, click "Connect local scanner" and allow local network access.'
@@ -259,15 +268,14 @@ try {
         $res.ContentType = 'text/plain; charset=utf-8'
         $res.ContentLength64 = $body.Length
         $res.OutputStream.Write($body, 0, $body.Length)
-      } elseif ($req.Url.AbsolutePath -ne '/${token}/scan.txt' -and $req.Url.AbsolutePath -ne '/${token}/wired.txt') {
+      } elseif ($req.Url.AbsolutePath -ne $bridgePath) {
         $body = [System.Text.Encoding]::UTF8.GetBytes('Not found')
         $res.StatusCode = 404
         $res.ContentType = 'text/plain; charset=utf-8'
         $res.ContentLength64 = $body.Length
         $res.OutputStream.Write($body, 0, $body.Length)
       } else {
-        $targetFile = $scanFile
-        if ($req.Url.AbsolutePath -eq '/${token}/wired.txt') { $targetFile = $wiredFile }
+        $targetFile = $dataFile
         if (-not [System.IO.File]::Exists($targetFile)) {
           $body = [System.Text.Encoding]::UTF8.GetBytes('snapshot not written yet')
           $res.StatusCode = 404
@@ -289,9 +297,9 @@ try {
   }
 } finally {
   $listener.Stop()
-  try { $ps.Stop(); $ps.Dispose() } catch { }
-  try { $psWired.Stop(); $psWired.Dispose() } catch { }
-  try { $psLldp.Stop(); $psLldp.Dispose() } catch { }
+  try { if ($psScan) { $psScan.Stop(); $psScan.Dispose() } } catch { }
+  try { if ($psWired) { $psWired.Stop(); $psWired.Dispose() } } catch { }
+  try { if ($psLldp) { $psLldp.Stop(); $psLldp.Dispose() } } catch { }
 }
 `;
 
@@ -304,8 +312,8 @@ try {
   const header = [
     "@echo off",
     "setlocal",
-    "title FloorScope scanner bridge",
-    "echo FloorScope scanner bridge",
+    `title FloorScope ${title} scanner bridge`,
+    `echo FloorScope ${title} scanner bridge`,
     "echo Keep this window open while analyzing. Press Ctrl+C or close it to stop.",
     "echo.",
     runner,
@@ -322,8 +330,8 @@ try {
   ].join("\r\n") + "\r\n";
 }
 
-/** Generate and download the portable scanner helper from the browser. */
-export function downloadBridgeBat(): void {
+/** Generate and download a mode-specific portable scanner from the browser. */
+export function downloadBridgeBat(mode: "wifi" | "wired"): void {
   const page = new URL(window.location.href);
   page.search = "";
   page.hash = "";
@@ -332,13 +340,14 @@ export function downloadBridgeBat(): void {
     origin: window.location.origin,
     siteUrl: page.toString(),
     token: randomToken(),
+    mode,
   });
 
   const blob = new Blob([bat], { type: "application/octet-stream" });
   const href = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = href;
-  a.download = "floorscope-scanner.bat";
+  a.download = `floorscope-${mode}-scanner.bat`;
   document.body.appendChild(a);
   a.click();
   a.remove();

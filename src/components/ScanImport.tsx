@@ -20,7 +20,7 @@ import { queryLoopbackPermission, type LoopbackPermission } from "../lib/live";
 import { downloadBridgeBat } from "../lib/bridgeBat";
 
 const LOOP_CMD =
-  "Start-Process -FilePath powershell.exe -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File .\\scripts\\lldp-capture.ps1 -OutFile lldp.txt'; while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; & .\\scripts\\wired-snapshot.ps1 -OutFile wired.txt -LldpFile lldp.txt; Start-Sleep 5 }";
+  "while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; Start-Sleep 5 }";
 
 export function ScanImport({
   onParsed,
@@ -80,9 +80,9 @@ export function ScanImport({
             <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
               This tab is the <b>data source</b> for the dashboard — it controls how FloorScope
               reads <b>scan.txt</b>. When you launch with <b>start.bat</b>, the scan loop and live
-              mode are already running. On a hosted site (e.g. GitHub Pages), use the{" "}
-              <b>portable scanner</b> below. Open it only if live updates stop, or if you want to
-              switch to manual mode.
+              mode are already running. On a hosted site (e.g. GitHub Pages), use the Wi-Fi{" "}
+              <b>portable scanner</b> below. Wired LAN scanning has its own scanner in the Wired
+              tab.
             </p>
           </div>
         </div>
@@ -161,21 +161,21 @@ export function ScanImport({
               Portable mode — run the scanner locally
             </h2>
             <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
-              Use this when FloorScope is opened from a hosted site (for example GitHub Pages) and
-              there is no <b>start.bat</b> or local server. The helper starts the <b>netsh</b> loop,
-              writes <b>scan.txt</b> and <b>wired.txt</b>, serves both on <b>127.0.0.1</b>, and
-              opens this page connected to them. Nothing is uploaded.
+              Use a separate scanner when FloorScope is opened from a hosted site (for example
+              GitHub Pages). Each helper runs only its Wi-Fi or wired scan, serves that output on
+              <b> 127.0.0.1</b> behind its own random token, and opens the matching app view.
+              Nothing is uploaded.
             </p>
           </div>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
-            onClick={downloadBridgeBat}
+            onClick={() => downloadBridgeBat("wifi")}
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
             <Download className="h-4 w-4" />
-            Download Windows scanner (.bat)
+            Download Wi-Fi scanner (.bat)
           </button>
           {live.bridge && live.supported && (
             <button
@@ -197,16 +197,20 @@ export function ScanImport({
         </div>
 
         <ol className="mt-3 list-decimal space-y-1 pl-5 text-xs leading-relaxed text-slate-500">
-          <li>Close any older FloorScope scanner window so only one bridge is running.</li>
           <li>
-            Double-click <b>floorscope-scanner.bat</b>. If Windows SmartScreen appears, choose{" "}
+            Download and run the scanner for the mode you want. Wi-Fi and wired scanners can run
+            independently.
+          </li>
+          <li>
+            Double-click <b>floorscope-wifi-scanner.bat</b> or <b>floorscope-wired-scanner.bat</b>.
+            If Windows SmartScreen appears, choose{" "}
             <b>More info → Run anyway</b>.
           </li>
           <li>Keep the scanner window open — it opens this page already pointed at the bridge.</li>
           <li>
-            In the <b>Portable mode</b> section above, click <b>Connect local scanner</b> and allow{" "}
-            <b>local network access</b> when the browser asks. Chrome/Edge only; Safari blocks
-            loopback requests.
+            Click <b>Connect local scanner</b> for Wi-Fi or <b>Connect wired scanner</b> in the
+            Wired tab, then allow <b>local network access</b> when the browser asks. Chrome/Edge
+            only; Safari blocks loopback requests.
           </li>
         </ol>
 
@@ -240,10 +244,9 @@ export function ScanImport({
               1 · Start the scan loop (local project)
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">
-              Run this in PowerShell on your laptop. It overwrites <b>scan.txt</b> and{" "}
-              <b>wired.txt</b> (in the folder where you started PowerShell) every 5 seconds,
-              including which AP you're connected to. If <b>tshark</b> is installed, it also captures
-              LLDP once at startup (waiting up to 40 seconds for the switch's advertisement).
+              Run this in PowerShell on your laptop. It overwrites <b>scan.txt</b> (in the folder
+              where you started PowerShell) every 5 seconds, including which AP you&apos;re connected
+              to.
               On a hosted site, use the portable scanner above instead.
             </p>
           </div>

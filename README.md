@@ -59,15 +59,20 @@ Then commit/push `docs/` and point GitHub Pages at **Settings → Pages → bran
 The build uses relative asset paths, so it works under the repository subpath without any
 environment variables. Local development continues to use `npm run dev`.
 
-Double-click the downloaded `floorscope-scanner.bat`. It:
+Download and run the scanner for the mode you want:
 
-1. starts the `netsh` scan loop writing to `%LOCALAPPDATA%\FloorScope\scan.txt`,
-2. writes the wired LAN snapshot to `%LOCALAPPDATA%\FloorScope\wired.txt`,
-3. serves both files on `127.0.0.1` behind a random token,
-4. reopens the hosted page with `?live=.../scan.txt&wired=.../wired.txt`.
+- `floorscope-wifi-scanner.bat` starts only the `netsh` scan loop and writes
+  `%LOCALAPPDATA%\FloorScope\scan.txt`. It serves that file on `127.0.0.1`
+  behind its own random token and opens the app with `?live=.../scan.txt`.
+- `floorscope-wired-scanner.bat` starts only the wired LAN snapshot loop and writes
+  `%LOCALAPPDATA%\FloorScope\wired.txt`. It serves that file on `127.0.0.1`
+  behind a separate random token and opens the app with `?wired=.../wired.txt`.
 
-If [Wireshark](https://www.wireshark.org/) (with Npcap) is installed, the scanner also captures
-**LLDP** once at startup so the Wired LAN tab can name the switch and port you are plugged into.
+The two scanners can run independently or at the same time. Keep each scanner
+window open while using its mode; closing it stops that scanner and its bridge.
+
+If [Wireshark](https://www.wireshark.org/) (with Npcap) is installed, the wired scanner also
+captures **LLDP** once at startup so the Wired LAN tab can name the switch and port you are plugged into.
 LLDP is usually sent every ~30 seconds, so the capture waits up to 40 seconds for the next
 advertisement (it stops early as soon as one arrives).
 
@@ -86,9 +91,14 @@ window open while analyzing; closing it stops both the loop and the bridge.
    npm install
    ```
 
-2. **Start the scan loop in a PowerShell terminal:**
+2. **Start the Wi-Fi scan loop in a PowerShell terminal:**
    ```powershell
-   Start-Process -FilePath powershell.exe -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File .\scripts\lldp-capture.ps1 -OutFile lldp.txt'; while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; & .\scripts\wired-snapshot.ps1 -OutFile wired.txt -LldpFile lldp.txt; Start-Sleep 5 }
+   while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; Start-Sleep 5 }
+   ```
+
+   For wired testing instead, run this in another PowerShell terminal:
+   ```powershell
+   Start-Process -FilePath powershell.exe -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File .\scripts\lldp-capture.ps1 -OutFile lldp.txt'; while ($true) { & .\scripts\wired-snapshot.ps1 -OutFile wired.txt -LldpFile lldp.txt; Start-Sleep 5 }
    ```
 
 3. **Start the Vite dev server:**
@@ -97,7 +107,9 @@ window open while analyzing; closing it stops both the loop and the bridge.
    ```
 
 4. **Open the application:**
-   Navigate to [http://localhost:5173/?live=scan.txt&wired=wired.txt](http://localhost:5173/?live=scan.txt&wired=wired.txt) in Chrome or Edge.
+   Open `http://localhost:5173/?live=scan.txt` for Wi-Fi or
+   `http://localhost:5173/?wired=wired.txt` for wired testing in Chrome or Edge. If both scan
+   loops are running, you can include both parameters.
 
 ---
 

@@ -264,18 +264,18 @@ export function WiredPanel({
             </span>
           )}
           <button
-            onClick={downloadBridgeBat}
+            onClick={() => downloadBridgeBat("wired")}
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
             <Download className="h-4 w-4" />
-            Download scanner (.bat)
+            Download wired scanner (.bat)
           </button>
         </div>
 
         {watch.bridge && watch.available && (
           <p className="mt-2 text-xs text-slate-400">
-            The portable scanner writes both <b>scan.txt</b> and <b>wired.txt</b>. Allow local
-            network access when the browser asks.
+            The portable wired scanner writes <b>wired.txt</b> only. Allow local network access
+            when the browser asks.
           </p>
         )}
 
