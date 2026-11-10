@@ -73,7 +73,7 @@ export function LiveHistoryChart({
   for (const [, pts] of matched) {
     for (const p of pts) if (p.t > windowEnd) windowEnd = p.t;
   }
-  if (!Number.isFinite(windowEnd)) return null;
+  if (!Number.isFinite(windowEnd)) windowEnd = Date.now();
 
   const windowStart = windowEnd - WINDOW_MS;
   const series = matched
@@ -90,8 +90,6 @@ export function LiveHistoryChart({
     })
     .filter((s) => s.pts.some((p) => p.dbm != null))
     .sort((a, b) => (b.lastReal?.dbm ?? -999) - (a.lastReal?.dbm ?? -999));
-
-  if (series.length === 0) return null;
 
   const W = 640;
   const H = 280;
@@ -283,6 +281,11 @@ export function LiveHistoryChart({
       </svg>
 
       <div className="mt-2 flex flex-wrap gap-2">
+        {series.length === 0 && (
+          <p className="text-xs text-slate-400">
+            No signal history yet — new scans will draw the lines again.
+          </p>
+        )}
         {series.map((s) => {
           const isFocused = focus === s.bssid;
           const c = colorFor(s.bssid);

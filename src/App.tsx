@@ -168,28 +168,56 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
-            <svg
-              viewBox="0 0 24 24"
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M5 12.55a11 11 0 0 1 14 0" />
-              <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-              <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-              <line x1="12" y1="20" x2="12.01" y2="20" />
-            </svg>
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-lg font-bold tracking-tight">FloorScope</h1>
-            <p className="truncate text-xs text-slate-500">Live WiFi floor-roaming analyzer</p>
-          </div>
-          <div className="ml-auto hidden items-center gap-2 sm:flex">
+        <div className="mx-auto flex max-w-5xl items-stretch gap-3 px-4">
+          <button
+            type="button"
+            onClick={() => setTab("dashboard")}
+            aria-label="Go to dashboard"
+            className="flex shrink-0 items-center gap-2 py-3 text-left"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12.55a11 11 0 0 1 14 0" />
+                <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                <line x1="12" y1="20" x2="12.01" y2="20" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold tracking-tight">FloorScope</h1>
+              <p className="truncate text-xs text-slate-500">Live WiFi floor-roaming analyzer</p>
+            </div>
+          </button>
+          <nav className="flex min-w-0 items-stretch gap-1 overflow-x-auto overflow-y-hidden pb-px">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={cn(
+                  "relative -mb-px flex items-center border-b-2 px-3 py-2.5 text-sm font-medium transition",
+                  tab === t.id
+                    ? "border-indigo-600 text-indigo-700"
+                    : "border-transparent text-slate-500 hover:text-slate-800"
+                )}
+              >
+                {t.label}
+                {t.badge != null && (
+                  <span className="ml-1.5 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                    {t.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+          <div className="ml-auto hidden shrink-0 items-center gap-2 sm:flex">
             {watching && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                 <Radio className="h-3.5 w-3.5" />
@@ -209,27 +237,6 @@ export default function App() {
             )}
           </div>
         </div>
-        <nav className="mx-auto flex max-w-5xl gap-1 px-4">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                "relative -mb-px border-b-2 px-3 py-2.5 text-sm font-medium transition",
-                tab === t.id
-                  ? "border-indigo-600 text-indigo-700"
-                  : "border-transparent text-slate-500 hover:text-slate-800"
-              )}
-            >
-              {t.label}
-              {t.badge != null && (
-                <span className="ml-1.5 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
-                  {t.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-6">

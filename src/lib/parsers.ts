@@ -124,7 +124,7 @@ function parseInterfaces(text: string): ConnectedInfo | undefined {
   const section = interfacesSection(text);
   if (!section) return undefined;
   const state = section.match(/^\s*State\s+:\s*(.+)$/mi)?.[1]?.trim() ?? null;
-  if (state && !/connected/i.test(state)) return { bssid: "", state };
+  if (state && !/^connected\b/i.test(state)) return { bssid: "", state };
   // Require the MAC to be the whole value so colocated-AP lines
   // (`BSSID: aa:..., Band: 6 GHz`) are never mistaken for the interface BSSID.
   const bssidRaw = section
