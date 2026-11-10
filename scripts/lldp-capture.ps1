@@ -29,6 +29,8 @@ $nic = Get-NetAdapter | Where-Object {
 } | Select-Object -First 1
 if (-not $nic) { return }
 
+("LLDP_WAIT|" + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()) | Set-Content -LiteralPath $OutFile -Encoding utf8
+
 $tsArgs = @(
   "-i", $nic.Name,
   "-a", "duration:40",

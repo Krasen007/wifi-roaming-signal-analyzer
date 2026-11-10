@@ -28,6 +28,7 @@ Operating systems only show the network name (SSID). FloorScope inspects the phy
 - **Live Signal History Chart:** SVG-based timeline rendering up to 120 polling intervals with live dBm trajectories, connection indicators, and roam/drop event flags.
 - **Local AP Registry:** Map BSSIDs to specific buildings, floors, and descriptive room/hallway locations. Fields use dynamic autocomplete based on previously entered locations.
 - **Wired LAN / Wall-Socket Discovery:** Plug into a wall socket to see the active adapter, IP/subnet, gateway MAC + vendor hint, DHCP/DNS and the LAN neighbour table. When the switch announces itself over **LLDP** (captured automatically via `tshark` when Wireshark/Npcap is installed), FloorScope shows the exact **switch name and port** plus management IP/VLAN. Save each socket to build a port map and cross-check it against your Wi-Fi AP registry.
+- The Wired tab reports when no Ethernet link is detected and shows a countdown while waiting up to 40 seconds for an LLDP announcement.
 - **Strict Privacy & Offline Execution:** 100% in-browser. All scan data and registry records remain entirely on your local machine (`localStorage`).
 
 ---

@@ -183,7 +183,15 @@ export function vendorFromMac(mac: string): string | null {
 }
 
 export function emptyWiredInfo(): WiredInfo {
-  return { adapters: [], neighbors: [], lldp: null, capturedAt: null, format: "empty" };
+  return {
+    adapters: [],
+    neighbors: [],
+    lldp: null,
+    linkStatus: null,
+    lldpCaptureStartedAt: null,
+    capturedAt: null,
+    format: "empty",
+  };
 }
 
 function splitList(value: string | undefined): string[] {
@@ -241,7 +249,17 @@ export function parseWired(text: string): WiredInfo {
 
     const parts = line.split("|");
     const tag = (parts[0] ?? "").toUpperCase();
-    if (tag === "ADAPTER") {
+    if (tag === "LINK") {
+      structured = true;
+      const status = (parts[1] ?? "").trim();
+      if (status === "connected" || status === "disconnected" || status === "unavailable") {
+        info.linkStatus = status;
+      }
+    } else if (tag === "LLDP_WAIT") {
+      structured = true;
+      const startedAt = Number(parts[1]);
+      if (Number.isFinite(startedAt)) info.lldpCaptureStartedAt = startedAt;
+    } else if (tag === "ADAPTER") {
       structured = true;
       const f = (i: number) => (parts[i] ?? "").trim();
       info.adapters.push({

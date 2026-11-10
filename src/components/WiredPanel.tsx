@@ -60,6 +60,7 @@ export function WiredPanel({
   const [notes, setNotes] = useState("");
   const [paste, setPaste] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const socketTouched = useRef(false);
   const switchTouched = useRef(false);
   const portTouched = useRef(false);
@@ -194,6 +195,23 @@ export function WiredPanel({
   const gatewayNeighbor = info?.neighbors.find((n) => n.ip === gatewayIp);
   const gatewayVendor = gatewayNeighbor?.vendor || (gatewayNeighbor ? vendorFromMac(gatewayNeighbor.mac) : null);
   const pastePreview = paste.trim() ? parseWired(paste) : null;
+  const lldpCaptureStartedAt = info?.lldpCaptureStartedAt ?? null;
+
+  useEffect(() => {
+    if (lldpCaptureStartedAt === null || info?.lldp) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => {
+      const currentTime = Date.now();
+      setNow(currentTime);
+      if (currentTime - lldpCaptureStartedAt >= 40_000) window.clearInterval(timer);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [info?.lldp, lldpCaptureStartedAt]);
+
+  const lldpSecondsRemaining =
+    lldpCaptureStartedAt === null
+      ? null
+      : Math.max(0, 40 - Math.floor((now - lldpCaptureStartedAt) / 1000));
 
   return (
     <div className="space-y-6">
@@ -244,6 +262,36 @@ export function WiredPanel({
             hint={watch.lastUpdate ? "new snapshot received" : "waiting for data"}
           />
         </div>
+
+        {info?.linkStatus === "disconnected" && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-xs leading-relaxed">
+              No wired link detected. Check that the Ethernet cable is connected and the adapter is
+              enabled.
+            </p>
+          </div>
+        )}
+
+        {info?.linkStatus === "unavailable" && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-600">
+            <Info className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-xs leading-relaxed">
+              No physical wired network adapter was detected on this computer.
+            </p>
+          </div>
+        )}
+
+        {lldpSecondsRemaining !== null && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-indigo-900">
+            <Info className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-xs leading-relaxed">
+              {lldpSecondsRemaining > 0
+                ? `Waiting for an LLDP announcement — up to ${lldpSecondsRemaining} seconds remaining.`
+                : "No LLDP announcement received in 40 seconds. The switch may not advertise LLDP on this port."}
+            </p>
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           {watch.available ? (

@@ -25,11 +25,13 @@ while ($true) {
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add('# FloorScope wired snapshot v1')
     $lines.Add('# ' + (Get-Date).ToString('o'))
-    $nics = @(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
-      $_.Status -eq 'Up' -and
+    $allNics = @(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
       $_.PhysicalMediaType -notmatch 'Wireless|802[.]11|Native 802' -and
       $_.InterfaceDescription -notmatch 'Virtual|Loopback|Tunnel|VPN|Hyper-V|VMware|TAP'
     })
+    $nics = @($allNics | Where-Object { $_.Status -eq 'Up' })
+    $linkStatus = if ($nics.Count -gt 0) { 'connected' } elseif ($allNics.Count -gt 0) { 'disconnected' } else { 'unavailable' }
+    $lines.Add('LINK|' + $linkStatus)
     $ifIndices = @($nics | ForEach-Object { $_.ifIndex })
     foreach ($nic in $nics) {
       $cfg = Get-NetIPConfiguration -InterfaceIndex $nic.ifIndex -ErrorAction SilentlyContinue
@@ -109,6 +111,7 @@ try {
     $_.InterfaceDescription -notmatch 'Virtual|Loopback|Tunnel|VPN|Hyper-V|VMware|TAP'
   } | Select-Object -First 1
   if (-not $nic) { return }
+  ('LLDP_WAIT|' + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()) | Set-Content -LiteralPath $OutFile -Encoding utf8
   $tsArgs = @('-i', $nic.Name, '-a', 'duration:40', '-c', '1', '-f', 'ether proto 0x88cc', '-T', 'fields', '-E', 'separator=|',
               '-e', 'lldp.chassis.id', '-e', 'lldp.chassis.id.mac', '-e', 'lldp.tlv.system.name',
               '-e', 'lldp.port.id', '-e', 'lldp.port.id.mac', '-e', 'lldp.port.desc',

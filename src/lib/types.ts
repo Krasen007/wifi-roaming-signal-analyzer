@@ -84,6 +84,8 @@ export interface WiredInfo {
   adapters: WiredAdapter[];
   neighbors: WiredNeighbor[];
   lldp: LldpNeighbor | null;
+  linkStatus: "connected" | "disconnected" | "unavailable" | null;
+  lldpCaptureStartedAt: number | null;
   capturedAt: number | null;
   format: string;
 }

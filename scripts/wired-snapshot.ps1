@@ -9,11 +9,13 @@ $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("# FloorScope wired snapshot v1")
 $lines.Add("# " + (Get-Date).ToString("o"))
 
-$nics = @(Get-NetAdapter | Where-Object {
-  $_.Status -eq "Up" -and
+$allNics = @(Get-NetAdapter | Where-Object {
   $_.PhysicalMediaType -notmatch "Wireless|802[.]11|Native 802" -and
   $_.InterfaceDescription -notmatch "Virtual|Loopback|Tunnel|VPN|Hyper-V|VMware|TAP"
 })
+$nics = @($allNics | Where-Object { $_.Status -eq "Up" })
+$linkStatus = if ($nics.Count -gt 0) { "connected" } elseif ($allNics.Count -gt 0) { "disconnected" } else { "unavailable" }
+$lines.Add("LINK|" + $linkStatus)
 $ifIndices = @($nics | ForEach-Object { $_.ifIndex })
 
 foreach ($nic in $nics) {
