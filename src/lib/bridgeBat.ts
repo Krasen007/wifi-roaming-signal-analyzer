@@ -85,6 +85,7 @@ while ($true) {
  */
 const LLDP_CAPTURE_PS = `param($OutFile)
 try {
+  Remove-Item -LiteralPath $OutFile -Force -ErrorAction SilentlyContinue
   $tsPath = $null
   $cmd = Get-Command tshark -ErrorAction SilentlyContinue
   if ($cmd) { $tsPath = $cmd.Source }

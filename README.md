@@ -88,7 +88,7 @@ window open while analyzing; closing it stops both the loop and the bridge.
 
 2. **Start the scan loop in a PowerShell terminal:**
    ```powershell
-   & .\scripts\lldp-capture.ps1 -OutFile lldp.txt; while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; & .\scripts\wired-snapshot.ps1 -OutFile wired.txt -LldpFile lldp.txt; Start-Sleep 5 }
+   Start-Process -FilePath powershell.exe -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File .\scripts\lldp-capture.ps1 -OutFile lldp.txt'; while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; & .\scripts\wired-snapshot.ps1 -OutFile wired.txt -LldpFile lldp.txt; Start-Sleep 5 }
    ```
 
 3. **Start the Vite dev server:**

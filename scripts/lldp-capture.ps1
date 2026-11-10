@@ -3,6 +3,7 @@ param(
 )
 
 $ErrorActionPreference = "SilentlyContinue"
+Remove-Item -LiteralPath $OutFile -Force -ErrorAction SilentlyContinue
 
 $tsPath = $null
 $cmd = Get-Command tshark -ErrorAction SilentlyContinue

@@ -81,6 +81,11 @@ export function WiredPanel({
     else if (suggested) setSocket(suggested);
   }, [suggested, registered]);
 
+  useEffect(() => {
+    setLocation(registered?.location ?? "");
+    setNotes(registered?.notes ?? "");
+  }, [registered]);
+
   const lastLldpRef = useRef("");
   useEffect(() => {
     const sig = info?.lldp ? `${info.lldp.systemName}|${info.lldp.portId}` : "";
@@ -150,7 +155,7 @@ export function WiredPanel({
     };
     const next = { ...registry };
     if (registered) {
-      const oldKey = slugify(registered.socket);
+      const oldKey = Object.keys(registry).find((registryKey) => registry[registryKey] === registered);
       if (oldKey && oldKey !== key) delete next[oldKey];
     }
     next[key] = entry;
