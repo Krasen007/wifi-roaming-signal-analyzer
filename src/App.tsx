@@ -1,13 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Radio, TriangleAlert } from "lucide-react";
-import type { AccessPoint, Band, History, Registry, RoamEvent } from "./lib/types";
+import type {
+  AccessPoint,
+  Band,
+  History,
+  Registry,
+  RoamEvent,
+  WiredInfo,
+  WiredRegistry,
+} from "./lib/types";
 import { MAX_HISTORY_POINTS } from "./lib/types";
 import type { ConnectedInfo } from "./lib/parsers";
 import { parseScan } from "./lib/parsers";
+import { parseWired } from "./lib/wired";
 import { useLiveWatch } from "./lib/useLiveWatch";
+import { useWiredWatch } from "./lib/useWiredWatch";
 import {
   loadRegistry,
   saveRegistry,
+  loadWiredRegistry,
+  saveWiredRegistry,
   loadCurrentFloor,
   saveCurrentFloor,
   loadCurrentBuilding,
@@ -18,9 +30,10 @@ import {
 import { ScanImport } from "./components/ScanImport";
 import { Dashboard } from "./components/Dashboard";
 import { RegistryManager } from "./components/RegistryManager";
+import { WiredPanel } from "./components/WiredPanel";
 import { cn } from "./utils/cn";
 
-type Tab = "dashboard" | "import" | "registry";
+type Tab = "dashboard" | "import" | "registry" | "wired";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("import");
@@ -34,10 +47,13 @@ export default function App() {
   const [lastSeenSsid, setLastSeenSsid] = useState<Record<string, string>>({});
   const [lastSeenBand, setLastSeenBand] = useState<Record<string, Band>>({});
   const [roams, setRoams] = useState<RoamEvent[]>([]);
+  const [wired, setWired] = useState<WiredInfo | null>(null);
+  const [wiredRegistry, setWiredRegistry] = useState<WiredRegistry>({});
   const autoNavRef = useRef(false);
 
   useEffect(() => {
     setRegistry(loadRegistry());
+    setWiredRegistry(loadWiredRegistry());
     setCurrentFloor(loadCurrentFloor());
     setCurrentBuilding(loadCurrentBuilding());
     setConnectedBssid(loadConnected());
@@ -46,6 +62,10 @@ export default function App() {
   const updateRegistry = (r: Registry) => {
     setRegistry(r);
     saveRegistry(r);
+  };
+  const updateWiredRegistry = (r: WiredRegistry) => {
+    setWiredRegistry(r);
+    saveWiredRegistry(r);
   };
   const updateFloor = (f: string) => {
     setCurrentFloor(f);
@@ -124,6 +144,11 @@ export default function App() {
   const live = useLiveWatch((text) => ingestText(text, true));
   const { watching } = live;
 
+  const wiredLive = useWiredWatch((text) => {
+    const info = parseWired(text);
+    if (info.format !== "empty" && info.format !== "unrecognized") setWired(info);
+  });
+
   // When live watching starts, allow a fresh auto-navigate once data flows.
   const prevWatching = useRef(watching);
   useEffect(() => {
@@ -159,10 +184,12 @@ export default function App() {
 
   const registeredCount = Object.values(registry).filter((e) => e.floor || e.location).length;
 
+  const wiredSocketCount = Object.keys(wiredRegistry).length;
   const tabs: { id: Tab; label: string; badge?: number }[] = [
     { id: "dashboard", label: "Dashboard" },
     { id: "import", label: "Live setup", badge: aps.length || undefined },
     { id: "registry", label: "AP Registry", badge: registeredCount || undefined },
+    { id: "wired", label: "Wired LAN", badge: wiredSocketCount || undefined },
   ];
 
   return (
@@ -218,13 +245,13 @@ export default function App() {
             ))}
           </nav>
           <div className="ml-auto hidden shrink-0 items-center gap-2 sm:flex">
-            {watching && (
+            {(watching || wiredLive.watching) && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                 <Radio className="h-3.5 w-3.5" />
                 Live
               </span>
             )}
-            {live.error && !watching && (
+            {((live.error && !watching) || (wiredLive.error && !wiredLive.watching)) && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
                 <TriangleAlert className="h-3.5 w-3.5" />
                 File lost
@@ -273,10 +300,22 @@ export default function App() {
             onChange={updateRegistry}
           />
         )}
+        {tab === "wired" && (
+          <WiredPanel
+            info={wired}
+            watch={wiredLive}
+            registry={wiredRegistry}
+            onChange={updateWiredRegistry}
+            onIngest={setWired}
+            apRegistry={registry}
+            currentBuilding={currentBuilding}
+            currentFloor={currentFloor}
+          />
+        )}
       </main>
 
       <footer className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-slate-400">
-        FloorScope runs entirely in your browser. scan.txt never leaves your PC.
+        FloorScope runs entirely in your browser. scan.txt and wired.txt never leave your PC.
       </footer>
     </div>
   );

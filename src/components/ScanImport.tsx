@@ -20,7 +20,7 @@ import { queryLoopbackPermission, type LoopbackPermission } from "../lib/live";
 import { downloadBridgeBat } from "../lib/bridgeBat";
 
 const LOOP_CMD =
-  "while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; Start-Sleep 5 }";
+  "& .\\scripts\\lldp-capture.ps1 -OutFile lldp.txt; while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; & .\\scripts\\wired-snapshot.ps1 -OutFile wired.txt -LldpFile lldp.txt; Start-Sleep 5 }";
 
 export function ScanImport({
   onParsed,
@@ -163,8 +163,8 @@ export function ScanImport({
             <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
               Use this when FloorScope is opened from a hosted site (for example GitHub Pages) and
               there is no <b>start.bat</b> or local server. The helper starts the <b>netsh</b> loop,
-              serves <b>scan.txt</b> on <b>127.0.0.1</b>, and opens this page connected to it.
-              Nothing is uploaded.
+              writes <b>scan.txt</b> and <b>wired.txt</b>, serves both on <b>127.0.0.1</b>, and
+              opens this page connected to them. Nothing is uploaded.
             </p>
           </div>
         </div>
@@ -240,8 +240,10 @@ export function ScanImport({
               1 · Start the scan loop (local project)
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">
-              Run this in PowerShell on your laptop. It overwrites <b>scan.txt</b> (in the folder
-              where you started PowerShell) every 5 seconds, including which AP you're connected to.
+              Run this in PowerShell on your laptop. It overwrites <b>scan.txt</b> and{" "}
+              <b>wired.txt</b> (in the folder where you started PowerShell) every 5 seconds,
+              including which AP you're connected to. If <b>tshark</b> is installed, it also captures
+              LLDP once at startup (waiting up to 40 seconds for the switch's advertisement).
               On a hosted site, use the portable scanner above instead.
             </p>
           </div>

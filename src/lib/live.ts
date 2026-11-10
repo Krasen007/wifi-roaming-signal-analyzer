@@ -54,17 +54,31 @@ function isLoopbackUrl(url: string): boolean {
  * Returns null when the app was opened without the parameter (normal manual flow).
  */
 export function autoLiveSource(): HttpSource | null {
+  return sourceFromParam("live");
+}
+
+/**
+ * Wired snapshots use the same mechanism as Wi-Fi scans: `?wired=wired.txt` for
+ * the local dev server, or `?wired=http://127.0.0.1:<port>/<token>/wired.txt`
+ * for the portable bridge. Returns null when the parameter is absent.
+ */
+export function autoWiredSource(): HttpSource | null {
+  return sourceFromParam("wired");
+}
+
+function sourceFromParam(name: "live" | "wired"): HttpSource | null {
   if (typeof window === "undefined") return null;
-  const param = new URLSearchParams(window.location.search).get("live");
+  const param = new URLSearchParams(window.location.search).get(name);
   if (param === null) return null;
 
   const raw = param.trim();
   const localPage = isLoopbackHost(window.location.hostname);
+  const defaultFile = name === "wired" ? "wired.txt" : "scan.txt";
 
   if (raw === "" || raw === "1") {
-    // A relative scan.txt only makes sense when the app itself is served
-    // locally (start.bat / Vite). On a hosted site it would just 404.
-    return localPage ? { url: "/scan.txt", name: "scan.txt", bridge: false } : null;
+    // A relative file only makes sense when the app itself is served locally
+    // (start.bat / Vite). On a hosted site it would just 404.
+    return localPage ? { url: `/${defaultFile}`, name: defaultFile, bridge: false } : null;
   }
 
   if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) {
@@ -75,16 +89,16 @@ export function autoLiveSource(): HttpSource | null {
       return null;
     }
     if (url.protocol !== "http:" && url.protocol !== "https:") return null;
-    const last = url.pathname.split("/").filter(Boolean).pop() ?? "scan.txt";
-    let name = last;
+    const last = url.pathname.split("/").filter(Boolean).pop() ?? defaultFile;
+    let fileName = last;
     try {
-      name = decodeURIComponent(last);
+      fileName = decodeURIComponent(last);
     } catch {
       // Malformed escape in the URL path - keep the raw segment.
     }
     return {
       url: url.toString(),
-      name,
+      name: fileName,
       bridge: isLoopbackHost(url.hostname),
     };
   }

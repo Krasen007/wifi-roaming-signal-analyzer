@@ -27,6 +27,7 @@ Operating systems only show the network name (SSID). FloorScope inspects the phy
 - **Physical Device Disambiguation:** Enterprise APs typically broadcast multiple SSIDs and bands across the same physical hardware, sharing middle BSSID octets (`xx:AA:BB:CC:DD:yy`). FloorScope groups these into unified hardware units (`D1`, `D2`, etc.), so you know how many distinct access points are actually nearby.
 - **Live Signal History Chart:** SVG-based timeline rendering up to 120 polling intervals with live dBm trajectories, connection indicators, and roam/drop event flags.
 - **Local AP Registry:** Map BSSIDs to specific buildings, floors, and descriptive room/hallway locations. Fields use dynamic autocomplete based on previously entered locations.
+- **Wired LAN / Wall-Socket Discovery:** Plug into a wall socket to see the active adapter, IP/subnet, gateway MAC + vendor hint, DHCP/DNS and the LAN neighbour table. When the switch announces itself over **LLDP** (captured automatically via `tshark` when Wireshark/Npcap is installed), FloorScope shows the exact **switch name and port** plus management IP/VLAN. Save each socket to build a port map and cross-check it against your Wi-Fi AP registry.
 - **Strict Privacy & Offline Execution:** 100% in-browser. All scan data and registry records remain entirely on your local machine (`localStorage`).
 
 ---
@@ -39,9 +40,9 @@ Double-click `start.bat` in the repository root.
 
 The launcher script automatically:
 1. Checks and installs npm dependencies if missing (`npm install`).
-2. Starts the background PowerShell Wi-Fi scan loop writing to `scan.txt` every 5 seconds.
+2. Starts the background PowerShell loop writing `scan.txt` (Wi-Fi) and `wired.txt` (LAN) every 5 seconds. If Wireshark/Npcap is installed, it also captures **LLDP** once at startup into `lldp.txt`.
 3. Launches the Vite server with custom scan-serving middleware.
-4. Opens your default browser at `http://localhost:<port>/?live=scan.txt` with live streaming already active.
+4. Opens your default browser at `http://localhost:<port>/?live=scan.txt&wired=wired.txt` with live streaming already active.
 
 *To stop FloorScope, close the spawned PowerShell and server command windows.*
 
@@ -61,8 +62,14 @@ environment variables. Local development continues to use `npm run dev`.
 Double-click the downloaded `floorscope-scanner.bat`. It:
 
 1. starts the `netsh` scan loop writing to `%LOCALAPPDATA%\FloorScope\scan.txt`,
-2. serves that file on `127.0.0.1` behind a random token,
-3. reopens the hosted page with `?live=http://127.0.0.1:<port>/<token>/scan.txt`.
+2. writes the wired LAN snapshot to `%LOCALAPPDATA%\FloorScope\wired.txt`,
+3. serves both files on `127.0.0.1` behind a random token,
+4. reopens the hosted page with `?live=.../scan.txt&wired=.../wired.txt`.
+
+If [Wireshark](https://www.wireshark.org/) (with Npcap) is installed, the scanner also captures
+**LLDP** once at startup so the Wired LAN tab can name the switch and port you are plugged into.
+LLDP is usually sent every ~30 seconds, so the capture waits up to 40 seconds for the next
+advertisement (it stops early as soon as one arrives).
 
 In the page's **Portable mode** section, click **Connect local scanner** and allow **local network
 access** when the browser asks (Chrome/Edge; Safari blocks loopback requests). Windows SmartScreen (and some antivirus
@@ -81,7 +88,7 @@ window open while analyzing; closing it stops both the loop and the bridge.
 
 2. **Start the scan loop in a PowerShell terminal:**
    ```powershell
-   while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; Start-Sleep 5 }
+   & .\scripts\lldp-capture.ps1 -OutFile lldp.txt; while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; & .\scripts\wired-snapshot.ps1 -OutFile wired.txt -LldpFile lldp.txt; Start-Sleep 5 }
    ```
 
 3. **Start the Vite dev server:**
@@ -90,13 +97,13 @@ window open while analyzing; closing it stops both the loop and the bridge.
    ```
 
 4. **Open the application:**
-   Navigate to [http://localhost:5173/?live=scan.txt](http://localhost:5173/?live=scan.txt) in Chrome or Edge.
+   Navigate to [http://localhost:5173/?live=scan.txt&wired=wired.txt](http://localhost:5173/?live=scan.txt&wired=wired.txt) in Chrome or Edge.
 
 ---
 
 ## Application Structure & Views
 
-FloorScope is organized into three focused tabs:
+FloorScope is organized into four focused tabs:
 
 ### 1. Dashboard
 - **Active Network & Floor Selector:** Filter by SSID, choose the chart scope (selected SSID or all detected Wi-Fi), and set your current location ("Building" and "Floor").
@@ -118,6 +125,13 @@ FloorScope is organized into three focused tabs:
 - Sortable by signal, BSSID, SSID, building, floor, or location.
 - Stored permanently in browser `localStorage`.
 
+### 4. Wired LAN
+- **Adapter & gateway:** link status/speed, adapter MAC + vendor, IPv4/prefix, DHCP, DNS, default gateway and its MAC/vendor hint.
+- **Switch identity:** when LLDP/CDP is heard, shows switch name, exact port, management IP, VLAN and chassis ID. Without LLDP it explains why and still records the socket + gateway.
+- **LAN neighbours:** ARP/`Get-NetNeighbor` table with vendor hints and a gateway marker.
+- **Port map:** save each wall socket with building/floor/room, switch/port/VLAN and notes. Cross-checks the current building/floor against the AP registry, so you can see whether the wired socket and the Wi-Fi AP are in the same area.
+- Works from the portable scanner (`wired.txt`), `start.bat`, or a manual paste of `ipconfig /all` + `arp -a`.
+
 ---
 
 ## Tech Stack
@@ -135,6 +149,9 @@ FloorScope is organized into three focused tabs:
 ```text
 wifi-roaming-signal-analyzer/
 ├── start.bat                     # Single-click launcher (PowerShell loop + Vite server)
+├── scripts/
+│   ├── lldp-capture.ps1          # One-shot LLDP capture via tshark (optional, needs Wireshark/Npcap)
+│   └── wired-snapshot.ps1        # One-shot wired/LAN snapshot (adapter, gateway, ARP table)
 ├── vite.config.ts                # Vite config with custom serveScanFile plugin
 ├── package.json
 ├── todo/
@@ -153,6 +170,7 @@ wifi-roaming-signal-analyzer/
 │   │   ├── ScanImport.tsx        # Ingest controls, scan loop copy, paste/drop
 │   │   ├── SignalHero.tsx        # Strongest AP summary card
 │   │   ├── SignalBars.tsx        # Signal visualizer bars
+│   │   ├── WiredPanel.tsx        # Wired LAN discovery + wall-socket port map
 │   │   └── BandTag.tsx           # Frequency band badges (2.4G / 5G / 6G)
 │   ├── lib/
 │   │   ├── bridgeBat.ts          # Portable scanner .bat + loopback HTTP bridge generator
@@ -160,10 +178,12 @@ wifi-roaming-signal-analyzer/
 │   │   ├── labels.ts             # Display label formatters
 │   │   ├── live.ts               # File System Access, HTTP fetch & loopback bridge handles
 │   │   ├── parsers.ts            # netsh output parsers & BSSID normalizer
+│   │   ├── wired.ts              # Wired snapshot parser, OUI vendor hints, port helpers
 │   │   ├── signal.ts             # Signal math (dBm <-> percentage, band detection)
 │   │   ├── storage.ts            # LocalStorage persistence helpers
 │   │   ├── types.ts              # Core TypeScript interfaces
-│   │   └── useLiveWatch.ts       # Polling hook for live scan.txt updates
+│   │   ├── useLiveWatch.ts       # Polling hook for live scan.txt updates
+│   │   └── useWiredWatch.ts      # Polling hook for live wired.txt updates
 │   └── utils/
 │       └── cn.ts                 # Classname merge utility
 └── README.md

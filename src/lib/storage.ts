@@ -1,6 +1,7 @@
-import type { Registry } from "./types";
+import type { Registry, WiredRegistry } from "./types";
 
 const KEY = "floorscope.registry.v1";
+const WIRED_KEY = "floorscope.wiredRegistry.v1";
 const CUR_FLOOR = "floorscope.currentFloor.v1";
 const CUR_BUILDING = "floorscope.currentBuilding.v1";
 const CONNECTED = "floorscope.connectedBssid.v1";
@@ -62,6 +63,60 @@ export function saveRegistry(r: Registry) {
     localStorage.setItem(KEY, JSON.stringify(r));
   } catch (err) {
     warnStorage("saveRegistry", err);
+  }
+}
+
+export function loadWiredRegistry(): WiredRegistry {
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(WIRED_KEY);
+  } catch (err) {
+    warnStorage("loadWiredRegistry:getItem", err);
+    return {};
+  }
+  if (!raw) return {};
+
+  let parsed: Record<string, Partial<WiredRegistry[string]>>;
+  try {
+    parsed = JSON.parse(raw) as Record<string, Partial<WiredRegistry[string]>>;
+  } catch (err) {
+    warnStorage("loadWiredRegistry:parse", err);
+    return {};
+  }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+
+  const registry: WiredRegistry = {};
+  for (const [key, entry] of Object.entries(parsed)) {
+    if (!entry || typeof entry !== "object") continue;
+    const text = (value: unknown) => (typeof value === "string" ? value : "");
+    const socket = text(entry.socket) || key;
+    const next: WiredRegistry[string] = {
+      socket,
+      building: text(entry.building),
+      floor: text(entry.floor),
+      location: text(entry.location),
+      switchName: text(entry.switchName),
+      switchPort: text(entry.switchPort),
+      switchMgmtIp: text(entry.switchMgmtIp),
+      vlan: text(entry.vlan),
+      gatewayIp: text(entry.gatewayIp),
+      gatewayMac: text(entry.gatewayMac),
+      gatewayVendor: text(entry.gatewayVendor),
+      adapterMac: text(entry.adapterMac),
+      notes: text(entry.notes),
+      updatedAt: typeof entry.updatedAt === "number" ? entry.updatedAt : 0,
+    };
+    registry[key] = next;
+  }
+  return registry;
+}
+
+export function saveWiredRegistry(r: WiredRegistry) {
+  try {
+    localStorage.setItem(WIRED_KEY, JSON.stringify(r));
+  } catch (err) {
+    warnStorage("saveWiredRegistry", err);
   }
 }
 

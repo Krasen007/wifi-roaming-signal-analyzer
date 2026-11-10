@@ -45,3 +45,65 @@ export interface LiveMeta {
   fileName: string | null;
   lastUpdate: number | null;
 }
+
+/** An active (or recently active) wired network adapter. */
+export interface WiredAdapter {
+  name: string;
+  description: string;
+  mac: string; // normalized lowercase colon separated
+  status: string;
+  linkSpeed: string;
+  ipv4: string[];
+  prefix: number | null;
+  gateway: string[];
+  dhcpEnabled: boolean | null;
+  dns: string[];
+}
+
+/** A device seen in the LAN neighbour table (ARP / Get-NetNeighbor). */
+export interface WiredNeighbor {
+  ip: string;
+  mac: string;
+  state?: string;
+  vendor?: string;
+  isGateway?: boolean;
+}
+
+/** What the switch announced about itself (LLDP/CDP). */
+export interface LldpNeighbor {
+  source: "LLDP" | "CDP";
+  chassisId: string;
+  systemName: string;
+  portId: string;
+  portDescription: string;
+  mgmtAddress: string;
+  vlan: string;
+}
+
+export interface WiredInfo {
+  adapters: WiredAdapter[];
+  neighbors: WiredNeighbor[];
+  lldp: LldpNeighbor | null;
+  capturedAt: number | null;
+  format: string;
+}
+
+/** A wall socket mapped to the switch/port and location it belongs to. */
+export interface WiredRegistryEntry {
+  socket: string; // free label, e.g. "3F-R12-A"
+  building: string;
+  floor: string;
+  location: string; // room/hallway description
+  switchName: string;
+  switchPort: string;
+  switchMgmtIp: string;
+  vlan: string;
+  gatewayIp: string;
+  gatewayMac: string;
+  gatewayVendor: string;
+  adapterMac: string;
+  notes: string;
+  updatedAt: number;
+}
+
+export type WiredRegistry = Record<string, WiredRegistryEntry>;

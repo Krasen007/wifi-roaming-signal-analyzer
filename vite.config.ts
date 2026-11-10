@@ -19,9 +19,10 @@ const __dirname = path.dirname(__filename);
  *  1. publish the port the server actually bound to (5173/4173, or the next free
  *     port when busy) into `.floorscope-port`, so the launcher can wait for the
  *     server without probing ports from the shell and then open the right URL;
- *  2. expose the `scan.txt` the netsh loop keeps overwriting, so the app can start
- *     its live watch without the File System Access picker - see `autoLiveSource()`
- *     in `src/lib/live.ts`, triggered by opening the app with `?live=scan.txt`.
+ *  2. expose the `scan.txt` / `wired.txt` files the launcher loops keep overwriting,
+ *     so the app can start its live watches without the File System Access picker -
+ *     see `autoLiveSource()` / `autoWiredSource()` in `src/lib/live.ts`, triggered
+ *     by opening the app with `?live=scan.txt&wired=wired.txt`.
  */
 function serveScanFile(): Plugin {
   const scanFilePattern = /\.(txt|log|out)$/i;
@@ -90,13 +91,14 @@ function serveScanFile(): Plugin {
     name: "floorscope-serve-scan-file",
     configureServer(server) {
       attachPortFile(server.httpServer);
-      // Registered before Vite's internal middlewares, so /scan.txt never falls
-      // through to the SPA index.html fallback.
+      // Registered before Vite's internal middlewares, so /scan.txt and
+      // /wired.txt never fall through to the SPA index.html fallback.
       server.middlewares.use(scanMiddleware);
     },
     configurePreviewServer(server) {
       attachPortFile(server.httpServer);
-      // Same order as above: serve scan.txt before the production static files.
+      // Same order as above: serve the live scan files before the production
+      // static files.
       server.middlewares.use(scanMiddleware);
     },
   };

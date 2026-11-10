@@ -15,6 +15,117 @@ function randomToken(): string {
 }
 
 /**
+ * PowerShell runspace that writes the wired snapshot in the same pipe-delimited
+ * format `parseWired()` understands. Kept as a standalone `param()` script so it
+ * can be handed to `[PowerShell]::Create().AddScript()`.
+ */
+const WIRED_SNAPSHOT_PS = `param($file, $tmp, $lldpFile)
+while ($true) {
+  try {
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add('# FloorScope wired snapshot v1')
+    $lines.Add('# ' + (Get-Date).ToString('o'))
+    $nics = @(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
+      $_.Status -eq 'Up' -and
+      $_.PhysicalMediaType -notmatch 'Wireless|802[.]11|Native 802' -and
+      $_.InterfaceDescription -notmatch 'Virtual|Loopback|Tunnel|VPN|Hyper-V|VMware|TAP'
+    })
+    $ifIndices = @($nics | ForEach-Object { $_.ifIndex })
+    foreach ($nic in $nics) {
+      $cfg = Get-NetIPConfiguration -InterfaceIndex $nic.ifIndex -ErrorAction SilentlyContinue
+      $ipv4 = (@($cfg.IPv4Address | ForEach-Object { $_.IPAddress }) -join ';')
+      $prefix = (@($cfg.IPv4Address | ForEach-Object { $_.PrefixLength }) -join ';')
+      $gw = (@($cfg.IPv4DefaultGateway | ForEach-Object { $_.NextHop }) -join ';')
+      $dns = (@($cfg.DNSServer | Where-Object { $_.AddressFamily -eq 2 } | ForEach-Object { $_.Address }) -join ';')
+      $iface = Get-NetIPInterface -InterfaceIndex $nic.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+      $dhcp = '0'
+      if ($iface.Dhcp -eq 'Enabled') { $dhcp = '1' }
+      $desc = $nic.InterfaceDescription
+      if ($desc) { $desc = $desc.Replace('|', '/') }
+      $name = $nic.Name
+      if ($name) { $name = $name.Replace('|', '/') }
+      $lines.Add('ADAPTER|' + $name + '|' + $desc + '|' + $nic.MacAddress + '|' + $nic.Status + '|' + $nic.LinkSpeed + '|' + $ipv4 + '|' + $prefix + '|' + $gw + '|' + $dhcp + '|' + $dns)
+    }
+    $neigh = @(Get-NetNeighbor -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object {
+      $ifIndices -contains $_.InterfaceIndex -and
+      $_.LinkLayerAddress -match '^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]$' -and
+      $_.LinkLayerAddress -ne '00-00-00-00-00-00' -and
+      $_.LinkLayerAddress -ne 'FF-FF-FF-FF-FF-FF' -and
+      $_.LinkLayerAddress -notlike '01-00-5E*' -and
+      $_.State -ne 'Unreachable' -and $_.State -ne 'Incomplete' -and
+      -not ($_.IPAddress.StartsWith('224.') -or $_.IPAddress.StartsWith('239.') -or $_.IPAddress.StartsWith('255.'))
+    })
+    foreach ($n in $neigh) {
+      $lines.Add('NEIGHBOR|' + $n.IPAddress + '|' + $n.LinkLayerAddress + '|' + $n.State)
+    }
+    if ($lldpFile -and (Test-Path -LiteralPath $lldpFile)) {
+      $lldp = (Get-Content -LiteralPath $lldpFile -Raw -ErrorAction SilentlyContinue)
+      if ($lldp) { $lines.Add($lldp.Trim()) }
+    }
+    $lines | Set-Content -LiteralPath $tmp -Encoding utf8
+    $moved = $false
+    for ($attempt = 0; $attempt -lt 5 -and -not $moved; $attempt++) {
+      try {
+        if ([System.IO.File]::Exists($file)) { [System.IO.File]::Delete($file) }
+        [System.IO.File]::Move($tmp, $file)
+        $moved = $true
+      } catch {
+        Start-Sleep -Milliseconds 100
+      }
+    }
+  } catch { }
+  Start-Sleep -Seconds 5
+}`;
+
+/**
+ * One-shot LLDP capture using tshark (Wireshark + Npcap), if it is installed.
+ * Runs in the background so the bridge can open the page immediately. When the
+ * switch does not speak LLDP, or tshark/Npcap is missing, this quietly does
+ * nothing and the UI falls back to gateway/vendor hints.
+ */
+const LLDP_CAPTURE_PS = `param($OutFile)
+try {
+  $tsPath = $null
+  $cmd = Get-Command tshark -ErrorAction SilentlyContinue
+  if ($cmd) { $tsPath = $cmd.Source }
+  if (-not $tsPath) {
+    $pf = [Environment]::GetEnvironmentVariable('ProgramFiles')
+    $pf86 = [Environment]::GetEnvironmentVariable('ProgramFiles(x86)')
+    $candidates = @()
+    if ($pf) { $candidates += (Join-Path (Join-Path $pf 'Wireshark') 'tshark.exe') }
+    if ($pf86) { $candidates += (Join-Path (Join-Path $pf86 'Wireshark') 'tshark.exe') }
+    foreach ($candidate in $candidates) {
+      if (Test-Path -LiteralPath $candidate) {
+        $tsPath = $candidate
+        break
+      }
+    }
+  }
+  if (-not $tsPath) { return }
+  $nic = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
+    $_.Status -eq 'Up' -and
+    $_.PhysicalMediaType -notmatch 'Wireless|802[.]11|Native 802' -and
+    $_.InterfaceDescription -notmatch 'Virtual|Loopback|Tunnel|VPN|Hyper-V|VMware|TAP'
+  } | Select-Object -First 1
+  if (-not $nic) { return }
+  $tsArgs = @('-i', $nic.Name, '-a', 'duration:40', '-c', '1', '-f', 'ether proto 0x88cc', '-T', 'fields', '-E', 'separator=|',
+              '-e', 'lldp.chassis.id', '-e', 'lldp.chassis.id.mac', '-e', 'lldp.tlv.system.name',
+              '-e', 'lldp.port.id', '-e', 'lldp.port.id.mac', '-e', 'lldp.port.desc',
+              '-e', 'lldp.mgn.addr.ip4', '-e', 'lldp.ieee.802_1.port_vlan.id')
+  $line = (& $tsPath @tsArgs 2>$null | Select-Object -First 1)
+  if ($line) {
+    $f = $line.Split('|')
+    $chassis = $f[0]; if (-not $chassis) { $chassis = $f[1] }
+    $systemName = $f[2]
+    $port = $f[3]; if (-not $port) { $port = $f[5] }; if (-not $port) { $port = $f[4] }
+    $portDesc = $f[5]
+    $mgmt = $f[6]
+    $vlan = $f[7]
+    ('LLDP|LLDP|' + $chassis + '|' + $systemName + '|' + $port + '|' + $portDesc + '|' + $mgmt + '|' + $vlan) | Set-Content -LiteralPath $OutFile -Encoding utf8
+  }
+} catch { }`;
+
+/**
  * Build a self-contained Windows batch file that:
  *   1. runs netsh every 5 s into %LOCALAPPDATA%\FloorScope\scan.txt,
  *   2. serves that file on loopback via a tiny HTTP server, and
@@ -40,6 +151,9 @@ $scanDir = Join-Path $baseDir 'FloorScope'
 New-Item -ItemType Directory -Force -Path $scanDir | Out-Null
 $scanFile = Join-Path $scanDir 'scan.txt'
 $scanTmp = Join-Path $scanDir 'scan.tmp'
+$wiredFile = Join-Path $scanDir 'wired.txt'
+$wiredTmp = Join-Path $scanDir 'wired.tmp'
+$lldpFile = Join-Path $scanDir 'lldp.txt'
 
 $loop = {
   param($file, $tmp)
@@ -67,6 +181,20 @@ $ps = [PowerShell]::Create()
 $null = $ps.AddScript($loop).AddArgument($scanFile).AddArgument($scanTmp)
 $null = $ps.BeginInvoke()
 
+$wiredScript = @'
+${WIRED_SNAPSHOT_PS}
+'@
+$psWired = [PowerShell]::Create()
+$null = $psWired.AddScript($wiredScript).AddArgument($wiredFile).AddArgument($wiredTmp).AddArgument($lldpFile)
+$null = $psWired.BeginInvoke()
+
+$lldpScript = @'
+${LLDP_CAPTURE_PS}
+'@
+$psLldp = [PowerShell]::Create()
+$null = $psLldp.AddScript($lldpScript).AddArgument($lldpFile)
+$null = $psLldp.BeginInvoke()
+
 $probe = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
 $probe.Start()
 $port = $probe.LocalEndpoint.Port
@@ -90,13 +218,16 @@ if ($null -eq $listener) {
 }
 
 $bridgeUrl = 'http://' + $bridgeHost + ':' + $port + '/${token}/scan.txt'
-$openUrl = $siteUrl + '?live=' + [uri]::EscapeDataString($bridgeUrl)
+$wiredUrl = 'http://' + $bridgeHost + ':' + $port + '/${token}/wired.txt'
+$openUrl = $siteUrl + '?live=' + [uri]::EscapeDataString($bridgeUrl) + '&wired=' + [uri]::EscapeDataString($wiredUrl)
 
 Write-Host ''
 Write-Host 'FloorScope scanner bridge'
 Write-Host '-------------------------'
 Write-Host ('Scan file : ' + $scanFile)
+Write-Host ('Wired file: ' + $wiredFile)
 Write-Host ('Bridge    : ' + $bridgeUrl)
+Write-Host ('Wired URL : ' + $wiredUrl)
 Write-Host ('Opening   : ' + $openUrl)
 Write-Host ''
 Write-Host 'In the browser, click "Connect local scanner" and allow local network access.'
@@ -127,25 +258,29 @@ try {
         $res.ContentType = 'text/plain; charset=utf-8'
         $res.ContentLength64 = $body.Length
         $res.OutputStream.Write($body, 0, $body.Length)
-      } elseif ($req.Url.AbsolutePath -ne '/${token}/scan.txt') {
+      } elseif ($req.Url.AbsolutePath -ne '/${token}/scan.txt' -and $req.Url.AbsolutePath -ne '/${token}/wired.txt') {
         $body = [System.Text.Encoding]::UTF8.GetBytes('Not found')
         $res.StatusCode = 404
         $res.ContentType = 'text/plain; charset=utf-8'
         $res.ContentLength64 = $body.Length
         $res.OutputStream.Write($body, 0, $body.Length)
-      } elseif (-not [System.IO.File]::Exists($scanFile)) {
-        $body = [System.Text.Encoding]::UTF8.GetBytes('scan.txt not written yet')
-        $res.StatusCode = 404
-        $res.ContentType = 'text/plain; charset=utf-8'
-        $res.ContentLength64 = $body.Length
-        $res.OutputStream.Write($body, 0, $body.Length)
       } else {
-        $body = [System.IO.File]::ReadAllBytes($scanFile)
-        $res.StatusCode = 200
-        $res.ContentType = 'text/plain; charset=utf-8'
-        $res.Headers['Last-Modified'] = [System.IO.File]::GetLastWriteTimeUtc($scanFile).ToString('R')
-        $res.ContentLength64 = $body.Length
-        $res.OutputStream.Write($body, 0, $body.Length)
+        $targetFile = $scanFile
+        if ($req.Url.AbsolutePath -eq '/${token}/wired.txt') { $targetFile = $wiredFile }
+        if (-not [System.IO.File]::Exists($targetFile)) {
+          $body = [System.Text.Encoding]::UTF8.GetBytes('snapshot not written yet')
+          $res.StatusCode = 404
+          $res.ContentType = 'text/plain; charset=utf-8'
+          $res.ContentLength64 = $body.Length
+          $res.OutputStream.Write($body, 0, $body.Length)
+        } else {
+          $body = [System.IO.File]::ReadAllBytes($targetFile)
+          $res.StatusCode = 200
+          $res.ContentType = 'text/plain; charset=utf-8'
+          $res.Headers['Last-Modified'] = [System.IO.File]::GetLastWriteTimeUtc($targetFile).ToString('R')
+          $res.ContentLength64 = $body.Length
+          $res.OutputStream.Write($body, 0, $body.Length)
+        }
       }
     } finally {
       $res.Close()
@@ -154,6 +289,8 @@ try {
 } finally {
   $listener.Stop()
   try { $ps.Stop(); $ps.Dispose() } catch { }
+  try { $psWired.Stop(); $psWired.Dispose() } catch { }
+  try { $psLldp.Stop(); $psLldp.Dispose() } catch { }
 }
 `;
 
