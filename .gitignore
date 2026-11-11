@@ -149,3 +149,5 @@ vite.config.ts.timestamp-*
 
 # FloorScope: port published by the dev server for local launchers
 /.floorscope-port
+
+.omo/
