@@ -113,6 +113,11 @@ export function RegistryManager({
     return { floorSuggestions: Array.from(floors), buildingSuggestions: Array.from(buildings) };
   }, [registry]);
 
+  const addEmptyEntry = (bssid: string) => {
+    if (registry[bssid]) return;
+    onChange({ ...registry, [bssid]: { bssid, building: "", floor: "", location: "" } });
+  };
+
   const addManual = () => {
     const raw = manualBssid.trim();
     if (!raw) {
@@ -125,7 +130,7 @@ export function RegistryManager({
       return;
     }
     setBssidError(null);
-    update(b, {});
+    addEmptyEntry(b);
     setManualBssid("");
   };
 
@@ -255,7 +260,7 @@ export function RegistryManager({
                     />
                   </td>
                   <td className="px-1 py-1 text-right">
-                    {registered && (
+                    {row.entry && (
                       <button
                         onClick={() => remove(row.bssid)}
                         className="inline-flex min-h-9 items-center px-2 text-xs font-medium text-rose-500 hover:text-rose-700"

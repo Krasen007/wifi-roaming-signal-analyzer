@@ -55,7 +55,10 @@ export function loadRegistry(): Registry {
         ? entry.band
         : undefined;
 
-    if (building || floor || location || band) {
+    const isBssid = /^([0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(bssid);
+    // Keep entries with location data or a remembered band, plus bare valid
+    // BSSIDs: those are rows the user added manually before filling them in.
+    if (building || floor || location || band || isBssid) {
       registry[bssid] = { bssid, building, floor, location, ...(band ? { band } : {}) };
     }
   }

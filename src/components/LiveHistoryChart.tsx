@@ -320,7 +320,6 @@ export function LiveHistoryChart({
               key={s.bssid}
               onClick={() => toggle(s.bssid)}
               aria-pressed={isFocused}
-              aria-label={`Isolate ${seriesName}`}
               className={cn(
                 "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs transition",
                 isFocused
@@ -330,6 +329,7 @@ export function LiveHistoryChart({
               )}
               title="Click to isolate this AP in the chart"
             >
+              <span className="sr-only">Isolate </span>
               <span
                 className="h-2 w-2 rounded-full"
                 style={{ backgroundColor: s.inRange ? c : "#cbd5e1" }}
