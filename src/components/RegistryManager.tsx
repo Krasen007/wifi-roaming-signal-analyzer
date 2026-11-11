@@ -156,12 +156,12 @@ export function RegistryManager({
                 sort={sort}
                 onSort={toggleSort}
               />
-              <SortableTh label="SSID" sortKey="ssid" sort={sort} onSort={toggleSort} />
               <SortableTh label="Band" sortKey="band" sort={sort} onSort={toggleSort} />
+              <SortableTh label="SSID" sortKey="ssid" sort={sort} onSort={toggleSort} />
               <SortableTh label="Building" sortKey="building" sort={sort} onSort={toggleSort} />
               <SortableTh label="Floor" sortKey="floor" sort={sort} onSort={toggleSort} />
               <SortableTh label="Location" sortKey="location" sort={sort} onSort={toggleSort} />
-              <th className="px-4 py-2"></th>
+              <th className="px-1 py-1"></th>
             </tr>
           </thead>
           <tbody>
@@ -195,7 +195,7 @@ export function RegistryManager({
                         : ""
                   )}
                 >
-                  <td className="px-4 py-2">
+                  <td className="px-1 py-1">
                     {row.ap ? (
                       <div className="flex items-center gap-2">
                         <SignalBars dbm={row.ap.dbm} />
@@ -205,10 +205,9 @@ export function RegistryManager({
                       <span className="text-xs text-slate-300">offline</span>
                     )}
                   </td>
-                  <td className="px-4 py-2 font-mono text-xs text-slate-700">
+                  <td className="px-1 py-1 font-mono text-xs text-slate-700">
                     <div className="flex items-center gap-2">
                       {row.bssid}
-                      {band && <BandTag band={band} />}
                       {isConnected && (
                         <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
                           CONNECTED
@@ -216,8 +215,9 @@ export function RegistryManager({
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{row.ap?.ssid ?? "—"}</td>
-                  <td className="px-4 py-2">
+                  <td className="px-1 py-1">{band && <BandTag band={band} />}</td>
+                  <td className="px-1 py-1 text-slate-600">{row.ap?.ssid ?? "—"}</td>
+                  <td className="px-1 py-1">
                     <input
                       list="building-suggestions"
                       value={row.entry?.building ?? ""}
@@ -226,7 +226,7 @@ export function RegistryManager({
                       className="w-28 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
                     />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-1 py-1">
                     <input
                       list="floor-suggestions"
                       value={row.entry?.floor ?? ""}
@@ -235,7 +235,7 @@ export function RegistryManager({
                       className="w-28 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
                     />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-1 py-1">
                     <input
                       value={row.entry?.location ?? ""}
                       onChange={(e) => update(row.bssid, { location: e.target.value })}
@@ -243,7 +243,7 @@ export function RegistryManager({
                       className="w-32 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
                     />
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-1 py-1 text-right">
                     {registered && (
                       <button
                         onClick={() => remove(row.bssid)}
@@ -293,7 +293,7 @@ function SortableTh({
   const Icon = !active ? ChevronsUpDown : sort.dir === "asc" ? ChevronUp : ChevronDown;
   return (
     <th
-      className="px-4 py-2 font-medium"
+      className="px-1 py-1 font-medium"
       aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
     >
       <button
