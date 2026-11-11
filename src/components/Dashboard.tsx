@@ -10,6 +10,7 @@ import { SignalHero } from "./SignalHero";
 import { RoamPanel } from "./RoamPanel";
 import { AllApsList } from "./AllApsList";
 import { OtherNetworks } from "./OtherNetworks";
+import { Card } from "./ui/Card";
 
 export function Dashboard({
   aps,
@@ -77,14 +78,14 @@ export function Dashboard({
 
   if (aps.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+      <Card tone="dashed" className="p-10 text-center">
         <Radar className="mx-auto h-10 w-10 text-slate-300" />
         <h3 className="mt-3 text-base font-semibold text-slate-800">No scan data yet</h3>
         <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
           Open <b>Live setup</b>, start the PowerShell loop, then pick your scan.txt — the
           dashboard updates as you walk between floors.
         </p>
-      </div>
+      </Card>
     );
   }
 

@@ -214,40 +214,42 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-stretch gap-3 px-4">
-          <button
-            type="button"
-            onClick={() => setTab("dashboard")}
-            aria-label="Go to dashboard"
-            className="flex shrink-0 items-center gap-2 py-3 text-left"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 12.55a11 11 0 0 1 14 0" />
-                <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                <line x1="12" y1="20" x2="12.01" y2="20" />
-              </svg>
-            </div>
+          <div className="flex shrink-0 items-center gap-2 py-3">
+            <button
+              type="button"
+              onClick={() => setTab("dashboard")}
+              aria-label="Go to dashboard"
+              className="flex h-11 w-11 items-center justify-center"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 12.55a11 11 0 0 1 14 0" />
+                  <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                  <line x1="12" y1="20" x2="12.01" y2="20" />
+                </svg>
+              </div>
+            </button>
             <div className="min-w-0">
               <h1 className="text-lg font-bold tracking-tight">FloorScope</h1>
               <p className="truncate text-xs text-slate-500">Live WiFi floor-roaming analyzer</p>
             </div>
-          </button>
+          </div>
           <nav className="flex min-w-0 items-stretch gap-1 overflow-x-auto overflow-y-hidden pb-px">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "relative -mb-px flex items-center border-b-2 px-3 py-2.5 text-sm font-medium transition",
+                  "relative -mb-px flex min-h-11 items-center border-b-2 px-3 py-2.5 text-sm font-medium transition",
                   tab === t.id
                     ? "border-indigo-600 text-indigo-700"
                     : "border-transparent text-slate-500 hover:text-slate-800"
@@ -255,7 +257,7 @@ export default function App() {
               >
                 {t.label}
                 {t.badge != null && (
-                  <span className="ml-1.5 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                  <span className="ml-1.5 rounded-full bg-indigo-100 px-1.5 py-0.5 text-micro font-bold text-indigo-700">
                     {t.badge}
                   </span>
                 )}
@@ -280,6 +282,12 @@ export default function App() {
                 {format}
               </span>
             )}
+          </div>
+          <div className="sr-only" role="status" aria-live="polite">
+            {watching || wiredLive.watching ? "Live scanning active. " : ""}
+            {(live.error && !watching) || (wiredLive.error && !wiredLive.watching)
+              ? "Scan file lost."
+              : ""}
           </div>
         </div>
       </header>

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import type { AccessPoint, Band, Registry, RegistryEntry } from "../lib/types";
 import { BandTag } from "./BandTag";
 import { SignalBars } from "./SignalBars";
+import { Card } from "./ui/Card";
 import { cn } from "../utils/cn";
 
 import { registryValueSets } from "../lib/labels";
@@ -47,6 +48,7 @@ export function RegistryManager({
   onChange: (r: Registry) => void;
 }) {
   const [manualBssid, setManualBssid] = useState("");
+  const [bssidError, setBssidError] = useState<string | null>(null);
   const [sort, setSort] = useState<SortState>({ key: "signal", dir: "desc" });
 
   const toggleSort = (key: SortKey) => {
@@ -112,22 +114,31 @@ export function RegistryManager({
   }, [registry]);
 
   const addManual = () => {
-    const b = manualBssid.trim().toLowerCase().replace(/-/g, ":");
-    if (/^([0-9a-f]{2}:){5}[0-9a-f]{2}$/.test(b)) {
-      update(b, {});
-      setManualBssid("");
+    const raw = manualBssid.trim();
+    if (!raw) {
+      setBssidError("Enter a BSSID first.");
+      return;
     }
+    const b = raw.toLowerCase().replace(/-/g, ":");
+    if (!/^([0-9a-f]{2}:){5}[0-9a-f]{2}$/.test(b)) {
+      setBssidError("Use six hex octets, e.g. aa:bb:cc:dd:ee:ff.");
+      return;
+    }
+    setBssidError(null);
+    update(b, {});
+    setManualBssid("");
   };
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 text-sm text-indigo-900">
+      <h2 className="sr-only">AP Registry</h2>
+      <Card tone="accent" padding="sm" className="text-sm text-indigo-900">
         <b>The key to your problem:</b> assign each BSSID (a physical AP's MAC address) to a{" "}
         <b>building</b> and <b>floor</b>. Since all your APs broadcast the same SSID, the BSSID is
         the only reliable way to know exactly which AP you're near. All fields are free text — use
         whatever names fit your buildings ("HQ", "Warehouse", "Mezzanine", "Floor 7"…). Tip: stand
         next to each AP, run a scan, and the strongest BSSID is that AP.
-      </div>
+      </Card>
 
       <datalist id="floor-suggestions">
         {floorSuggestions.map((f) => (
@@ -140,7 +151,7 @@ export function RegistryManager({
         ))}
       </datalist>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <Card padding="none" className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-500">
@@ -209,7 +220,7 @@ export function RegistryManager({
                     <div className="flex items-center gap-2">
                       {row.bssid}
                       {isConnected && (
-                        <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                        <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-micro font-bold text-indigo-700">
                           CONNECTED
                         </span>
                       )}
@@ -223,7 +234,7 @@ export function RegistryManager({
                       value={row.entry?.building ?? ""}
                       onChange={(e) => update(row.bssid, { building: e.target.value })}
                       placeholder="e.g. HQ"
-                      className="w-28 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
+                      className="min-h-9 w-28 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                     />
                   </td>
                   <td className="px-1 py-1">
@@ -232,7 +243,7 @@ export function RegistryManager({
                       value={row.entry?.floor ?? ""}
                       onChange={(e) => update(row.bssid, { floor: e.target.value })}
                       placeholder="e.g. 2nd floor"
-                      className="w-28 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
+                      className="min-h-9 w-28 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                     />
                   </td>
                   <td className="px-1 py-1">
@@ -240,14 +251,14 @@ export function RegistryManager({
                       value={row.entry?.location ?? ""}
                       onChange={(e) => update(row.bssid, { location: e.target.value })}
                       placeholder="e.g. Hallway, 2nd floor"
-                      className="w-32 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
+                      className="min-h-9 w-32 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                     />
                   </td>
                   <td className="px-1 py-1 text-right">
                     {registered && (
                       <button
                         onClick={() => remove(row.bssid)}
-                        className="text-xs font-medium text-rose-500 hover:text-rose-700"
+                        className="inline-flex min-h-9 items-center px-2 text-xs font-medium text-rose-500 hover:text-rose-700"
                       >
                         Clear
                       </button>
@@ -258,21 +269,37 @@ export function RegistryManager({
             })}
           </tbody>
         </table>
-      </div>
+      </Card>
 
-      <div className="flex items-center gap-2">
-        <input
-          value={manualBssid}
-          onChange={(e) => setManualBssid(e.target.value)}
-          placeholder="Add a BSSID manually (aa:bb:cc:dd:ee:ff)"
-          className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
-        />
-        <button
-          onClick={addManual}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
-        >
-          Add
-        </button>
+      <div>
+        <div className="flex items-center gap-2">
+          <input
+            aria-label="BSSID"
+            aria-invalid={Boolean(bssidError)}
+            aria-describedby={bssidError ? "manual-bssid-error" : undefined}
+            value={manualBssid}
+            onChange={(e) => {
+              setManualBssid(e.target.value);
+              if (bssidError) setBssidError(null);
+            }}
+            placeholder="Add a BSSID manually (aa:bb:cc:dd:ee:ff)"
+            className={cn(
+              "min-h-11 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400",
+              bssidError && "border-rose-400"
+            )}
+          />
+          <button
+            onClick={addManual}
+            className="min-h-11 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+          >
+            Add
+          </button>
+        </div>
+        {bssidError && (
+          <p id="manual-bssid-error" role="alert" className="text-xs text-rose-600">
+            {bssidError}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -299,7 +326,7 @@ function SortableTh({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className="inline-flex items-center gap-1 whitespace-nowrap hover:text-slate-800"
+        className="inline-flex min-h-9 items-center gap-1 whitespace-nowrap hover:text-slate-800"
       >
         {label}
         <Icon className={cn("h-3.5 w-3.5", active ? "text-indigo-500" : "text-slate-300")} />

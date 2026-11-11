@@ -1,5 +1,4 @@
 import type { Band } from "../lib/types";
-import { cn } from "../utils/cn";
 
 const styles: Record<Band, string> = {
   "2.4": "bg-amber-100 text-amber-700",
@@ -9,8 +8,10 @@ const styles: Record<Band, string> = {
 };
 
 export function BandTag({ band }: { band: Band }) {
+  // Plain interpolation: tailwind-merge cannot tell the custom `text-micro`
+  // size from a `text-*` colour, so `cn()` would drop one of them.
   return (
-    <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide", styles[band])}>
+    <span className={`rounded px-1.5 py-0.5 text-micro font-semibold tracking-wide ${styles[band]}`}>
       {band === "?" ? "?GHz" : `${band}GHz`}
     </span>
   );

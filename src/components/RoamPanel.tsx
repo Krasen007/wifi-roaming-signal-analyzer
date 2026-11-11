@@ -2,6 +2,7 @@ import { CircleCheck, MoveRight, Search, TriangleAlert, Zap } from "lucide-react
 import type { AccessPoint, LiveMeta, Registry, RoamEvent } from "../lib/types";
 import { bssidDisplayName, locationLabel } from "../lib/labels";
 import { ROAM_DELTA_THRESHOLD_DBM } from "../lib/signal";
+import { Card } from "./ui/Card";
 
 export interface RoamPanelProps {
   connected?: AccessPoint;
@@ -59,16 +60,30 @@ export function RoamPanel({
 
   const userWhere = [currentBuilding.trim(), currentFloor.trim()].filter(Boolean).join(" · ");
 
+  // Deliberately excludes dBm values and timestamps: identical strings produce
+  // no DOM mutation, so polling cannot re-announce the same verdict.
+  const statusMessage = stickyWarning
+    ? "Sticky client detected. A stronger access point is available."
+    : wrongBuilding || wrongFloor
+      ? `Wrong ${wrongBuilding ? "building" : "floor"} attachment.`
+      : connected
+        ? "Connected to the best access point."
+        : "Connected access point is unknown.";
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <Card>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Roaming check</h3>
+        <h2 className="text-sm font-semibold text-slate-900">Roaming check</h2>
         {live.watching && (
-          <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+          <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-micro font-bold text-emerald-700">
             <Zap className="h-3 w-3" /> AUTO
           </span>
         )}
       </div>
+
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {statusMessage}
+      </p>
 
       <div className="mt-3 space-y-3 text-sm">
         {stickyWarning ? (
@@ -120,7 +135,7 @@ export function RoamPanel({
             id="roam-connected-select"
             value={connectedBssid}
             onChange={(e) => setConnectedBssid(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-indigo-400"
+            className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs focus:border-indigo-400"
           >
             <option value="">— unknown —</option>
             {myAps.map((a) => (
@@ -130,7 +145,7 @@ export function RoamPanel({
             ))}
           </select>
           {connectedBssid && live.watching && (
-            <p className="mt-1 text-[11px] text-emerald-600">
+            <p className="mt-1 text-xs text-emerald-600">
               Auto-updates from scan.txt every 5 s.
             </p>
           )}
@@ -138,9 +153,9 @@ export function RoamPanel({
 
         {/* Connection event log */}
         <div>
-          <label className="text-xs font-medium text-slate-500">Connection events</label>
+          <h3 className="text-xs font-medium text-slate-500">Connection events</h3>
           {roams.length === 0 ? (
-            <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-400">
+            <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400">
               {live.watching
                 ? "No connection changes yet — roams and drops will be logged here while you walk around."
                 : "Roams and disconnects will be logged here as the connected AP changes."}
@@ -152,10 +167,10 @@ export function RoamPanel({
                   key={r.t}
                   className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1"
                 >
-                  <span className="font-mono text-[10px] text-slate-400">
+                  <span className="font-mono text-micro text-slate-400">
                     {new Date(r.t).toLocaleTimeString()}
                   </span>
-                  <span className="inline-flex min-w-0 items-center gap-1 text-[11px] text-slate-600">
+                  <span className="inline-flex min-w-0 items-center gap-1 text-xs text-slate-600">
                     <span className="truncate">{bssidDisplayName(registry, r.from)}</span>
                     <MoveRight className="h-3 w-3 shrink-0 text-indigo-500" />
                     {r.to ? (
@@ -174,7 +189,6 @@ export function RoamPanel({
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
-

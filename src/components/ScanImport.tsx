@@ -18,6 +18,8 @@ import { cn } from "../utils/cn";
 import type { LiveWatch } from "../lib/useLiveWatch";
 import { queryLoopbackPermission, type LoopbackPermission } from "../lib/live";
 import { downloadBridgeBat } from "../lib/bridgeBat";
+import { Card } from "./ui/Card";
+import { HowItWorks } from "./ui/HowItWorks";
 
 const LOOP_CMD =
   "while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; Start-Sleep 5 }";
@@ -69,25 +71,18 @@ export function ScanImport({
 
   return (
     <div className="space-y-6">
-      {/* OVERVIEW — what this tab does and what the numbers mean */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      {/* OVERVIEW — live status tiles; the explainer lives in HowItWorks below */}
+      <Card>
         <div className="flex items-start gap-2.5">
           <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
             <Info className="h-4 w-4" />
           </div>
           <div>
             <h2 className="text-sm font-semibold text-slate-900">What this tab is for</h2>
-            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-              This tab is the <b>data source</b> for the dashboard — it controls how FloorScope
-              reads <b>scan.txt</b>. When you launch with <b>start-wifi.bat</b>, the scan loop and
-              live mode are already running. On a hosted site (e.g. GitHub Pages), use the Wi-Fi{" "}
-              <b>portable scanner</b> below. Wired LAN scanning has its own scanner in the Wired
-              tab.
-            </p>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-2 divide-x divide-y divide-slate-200 sm:grid-cols-4 sm:divide-y-0">
           <StatusItem
             label="Mode"
             value={live.bridge ? "Portable bridge" : live.auto ? "Automatic" : "Manual"}
@@ -119,28 +114,6 @@ export function ScanImport({
           />
         </div>
 
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
-          <p className="font-semibold text-slate-700">What the numbers mean</p>
-          <ul className="mt-1 list-disc space-y-1 pl-4">
-            <li>
-              <b>{aps.length}</b> on the <b>Live setup</b> tab badge: unique access points in the
-              most recent scan (not the number of scans).
-            </li>
-            <li>
-              <b>Updated 14:32:05</b>: when a new scan was last read. If it stops changing, the
-              loop, dev server, or scanner bridge is not running.
-            </li>
-            <li>
-              <b>AP Registry</b> badge: how many BSSIDs you&apos;ve assigned a building, floor, or
-              location.
-            </li>
-            <li>
-              The loop writes a new scan every <b>5 s</b>; FloorScope checks for changes about every{" "}
-              <b>1.2 s</b>.
-            </li>
-          </ul>
-        </div>
-
         {(live.auto || live.bridge) && live.watching && (
           <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-700">
             <Check className="h-3.5 w-3.5" /> All set —{" "}
@@ -148,10 +121,10 @@ export function ScanImport({
             dashboard. You can go back to Dashboard.
           </p>
         )}
-      </div>
+      </Card>
 
       {/* PORTABLE — hosted static site */}
-      <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
+      <Card tone="success">
         <div className="flex items-center gap-2.5">
           <div className="rounded-lg bg-emerald-600 p-2 text-white">
             <Download className="h-4 w-4" />
@@ -172,7 +145,7 @@ export function ScanImport({
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             onClick={() => downloadBridgeBat("wifi")}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
             <Download className="h-4 w-4" />
             Download Wi-Fi scanner (.bat)
@@ -181,7 +154,7 @@ export function ScanImport({
             <button
               onClick={live.watching ? live.stop : live.start}
               className={cn(
-                "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
+                    "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
                 live.watching ? "bg-rose-600 hover:bg-rose-500" : "bg-indigo-600 hover:bg-indigo-500"
               )}
             >
@@ -231,10 +204,10 @@ export function ScanImport({
             <b>Connect local scanner</b>.
           </p>
         )}
-      </div>
+      </Card>
 
       {/* STEP 1+2 — start the loop */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <Card>
         <div className="flex items-center gap-2.5">
           <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600">
             <Play className="h-4 w-4" />
@@ -257,21 +230,19 @@ export function ScanImport({
           </code>
           <button
             onClick={copyLoop}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white hover:bg-slate-700"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white hover:bg-slate-700"
           >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
         <p className="mt-2 text-xs text-slate-400">
-          Leave the PowerShell window open while you walk around. Stop it with Ctrl+C when done.
-          Or just run <b>start-wifi.bat</b> in the project folder — it starts this loop, the
-          preview server and live mode in one go.
+          Leave the PowerShell window open while you walk; stop it with Ctrl+C when done.
         </p>
-      </div>
+      </Card>
 
       {/* STEP 3 — watch the file live */}
-      <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-5 shadow-sm">
+      <Card tone="accent">
         <div className="flex items-center gap-2.5">
           <div className="rounded-lg bg-indigo-600 p-2 text-white">
             <Activity className="h-4 w-4" />
@@ -306,7 +277,7 @@ export function ScanImport({
                 <button
                   onClick={live.watching ? live.stop : live.start}
                   className={cn(
-                    "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
+                "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
                     live.watching
                       ? "bg-rose-600 hover:bg-rose-500"
                       : "bg-indigo-600 hover:bg-indigo-500"
@@ -328,7 +299,7 @@ export function ScanImport({
               {live.watching && (
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="absolute inline-flex h-full w-full motion-safe:animate-ping rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                   </span>
                   <span className="font-mono text-xs">{live.fileName}</span>
@@ -357,14 +328,11 @@ export function ScanImport({
             <p className="text-xs">{live.error}</p>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* FALLBACK — paste once */}
-      <div
-        className={cn(
-          "rounded-2xl border bg-white p-5 shadow-sm transition",
-          dragOver ? "border-indigo-400 ring-2 ring-indigo-100" : "border-slate-200"
-        )}
+      <Card
+        className={cn("transition", dragOver && "border-indigo-400 ring-2 ring-indigo-100")}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -394,20 +362,40 @@ export function ScanImport({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Paste netsh output here…"
-          className="mt-3 h-40 w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] leading-relaxed text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 sm:text-xs"
+          className="mt-3 h-40 w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-700 focus:border-indigo-400 sm:text-xs"
         />
         <ImportFooter text={text} onImport={ingestPasted} />
-      </div>
+      </Card>
 
-      <div className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-relaxed text-slate-500">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+      <HowItWorks>
         <p>
-          Browsers can't scan WiFi directly — the loop + file-watch trick (or the portable
-          loopback bridge) is what makes this live. Everything stays on your machine; scan.txt is
-          only read locally, never uploaded. For a real fix to "sticky" devices across floors,
-          enable 802.11k/v/r fast-roaming on your APs.
+          This tab is the <b>data source</b> for the dashboard — it controls how FloorScope reads{" "}
+          <b>scan.txt</b>. When you launch with <b>start-wifi.bat</b>, the scan loop and live mode
+          are already running. On a hosted site (e.g. GitHub Pages), use the Wi-Fi{" "}
+          <b>portable scanner</b> above. Wired LAN scanning has its own scanner in the Wired tab.
         </p>
-      </div>
+        <div>
+          <p className="font-semibold text-slate-700">What the numbers mean</p>
+          <ul className="mt-1 list-disc space-y-1 pl-4">
+            <li>
+              <b>{aps.length}</b> on the <b>Live setup</b> tab badge: unique access points in the
+              most recent scan (not the number of scans).
+            </li>
+            <li>
+              <b>Updated 14:32:05</b>: when a new scan was last read. If it stops changing, the
+              loop, dev server, or scanner bridge is not running.
+            </li>
+            <li>
+              <b>AP Registry</b> badge: how many BSSIDs you&apos;ve assigned a building, floor, or
+              location.
+            </li>
+            <li>
+              The loop writes a new scan every <b>5 s</b>; FloorScope checks for changes about every{" "}
+              <b>1.2 s</b>.
+            </li>
+          </ul>
+        </div>
+      </HowItWorks>
     </div>
   );
 }
@@ -436,9 +424,9 @@ function ImportFooter({ text, onImport }: { text: string; onImport: () => void }
         onClick={onImport}
         disabled={!res || (res.aps.length === 0 && !res.connected)}
         className={cn(
-          "w-full rounded-lg px-4 py-2 text-sm font-semibold text-white transition sm:w-auto",
+          "min-h-11 w-full rounded-lg px-4 py-2 text-sm font-semibold text-white transition sm:w-auto",
           !res || (res.aps.length === 0 && !res.connected)
-            ? "cursor-not-allowed bg-slate-300"
+            ? "cursor-not-allowed bg-slate-200 text-slate-500"
             : "bg-indigo-600 hover:bg-indigo-500"
         )}
       >
@@ -460,8 +448,8 @@ function StatusItem({
   tone?: "good" | "muted";
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+    <div className="rounded-xl bg-slate-50 px-3 py-2">
+      <p className="label-caps text-slate-400">{label}</p>
       <p
         className={cn(
           "mt-0.5 text-sm font-semibold",
@@ -470,7 +458,7 @@ function StatusItem({
       >
         {value}
       </p>
-      <p className="text-[10px] text-slate-400">{hint}</p>
+      <p className="text-micro text-slate-400">{hint}</p>
     </div>
   );
 }

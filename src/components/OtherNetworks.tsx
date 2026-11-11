@@ -1,6 +1,7 @@
 import type { AccessPoint } from "../lib/types";
 import { SignalBars } from "./SignalBars";
 import { BandTag } from "./BandTag";
+import { Card } from "./ui/Card";
 
 export interface OtherNetworksProps {
   aps: AccessPoint[];
@@ -13,8 +14,8 @@ export function OtherNetworks({ aps, activeSsid }: OtherNetworksProps) {
   if (otherAps.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-900">Other nearby networks</h3>
+    <Card>
+      <h2 className="text-sm font-semibold text-slate-900">Other nearby networks</h2>
       <div className="mt-3 divide-y divide-slate-100">
         {otherAps.map((a) => (
           <div key={a.bssid} className="flex items-center gap-3 py-2">
@@ -27,7 +28,6 @@ export function OtherNetworks({ aps, activeSsid }: OtherNetworksProps) {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
-

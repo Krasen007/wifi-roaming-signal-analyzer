@@ -1,4 +1,5 @@
 import type { LiveMeta } from "../lib/types";
+import { Card } from "./ui/Card";
 
 export interface DashboardControlsProps {
   activeSsid: string;
@@ -30,7 +31,7 @@ export function DashboardControls({
   live,
 }: DashboardControlsProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <Card padding="sm" className="flex flex-wrap items-center gap-3">
       <div className="flex items-center gap-2">
         <label htmlFor="dash-network-select" className="text-xs font-medium text-slate-500">
           Network
@@ -39,7 +40,7 @@ export function DashboardControls({
           id="dash-network-select"
           value={activeSsid}
           onChange={(e) => onSelectSsid(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+          className="min-h-11 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400"
         >
           {ssids.map((s) => (
             <option key={s} value={s}>
@@ -57,7 +58,7 @@ export function DashboardControls({
           id="chart-network"
           value={chartAllWifi ? "__all__" : activeSsid}
           onChange={(e) => onSelectChartScope(e.target.value === "__all__")}
-          className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+          className="min-h-11 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400"
         >
           <option value="__all__">All detected Wi-Fi</option>
           {ssids.map((s) => (
@@ -78,7 +79,7 @@ export function DashboardControls({
           value={currentBuilding}
           onChange={(e) => onChangeBuilding(e.target.value)}
           placeholder="e.g. HQ"
-          className="w-32 rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+          className="min-h-11 w-32 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400"
         >
         </input>
         <datalist id="dash-buildings">
@@ -98,7 +99,7 @@ export function DashboardControls({
           value={currentFloor}
           onChange={(e) => onChangeFloor(e.target.value)}
           placeholder="your floor (free text)"
-          className="w-44 rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+          className="min-h-11 w-44 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400"
         />
         <datalist id="dash-floors">
           {floors.map((f) => (
@@ -111,12 +112,12 @@ export function DashboardControls({
         {live.watching ? (
           <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="absolute inline-flex h-full w-full motion-safe:animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-            LIVE
+            <span role="status" aria-live="polite">LIVE</span>
             {live.lastUpdate && (
-              <span className="font-normal text-emerald-600">
+              <span aria-hidden="true" className="font-normal text-emerald-600">
                 {new Date(live.lastUpdate).toLocaleTimeString()}
               </span>
             )}
@@ -127,6 +128,6 @@ export function DashboardControls({
           </span>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

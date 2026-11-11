@@ -4,6 +4,7 @@ import { quality } from "../lib/signal";
 import { bssidDisplayName, locationLabel } from "../lib/labels";
 import { SignalBars } from "./SignalBars";
 import { BandTag } from "./BandTag";
+import { Card } from "./ui/Card";
 
 export interface SignalHeroProps {
   strongest: AccessPoint;
@@ -18,7 +19,7 @@ export function SignalHero({ strongest, activeSsid, registry, isConnected = fals
   const q = quality(strongest.dbm);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white shadow-sm lg:col-span-2">
+    <Card tone="hero" padding="lg" className="lg:col-span-2">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
@@ -53,7 +54,7 @@ export function SignalHero({ strongest, activeSsid, registry, isConnected = fals
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

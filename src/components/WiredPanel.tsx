@@ -30,6 +30,8 @@ import {
 import type { WiredWatch } from "../lib/useWiredWatch";
 import { downloadBridgeBat } from "../lib/bridgeBat";
 import { cn } from "../utils/cn";
+import { Card } from "./ui/Card";
+import { HowItWorks } from "./ui/HowItWorks";
 
 export function WiredPanel({
   info,
@@ -216,7 +218,7 @@ export function WiredPanel({
   return (
     <div className="space-y-6">
       {/* Overview / source */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <Card>
         <div className="flex items-start gap-2.5">
           <div className="rounded-lg bg-slate-900 p-2 text-white">
             <Cable className="h-4 w-4" />
@@ -298,7 +300,7 @@ export function WiredPanel({
             <button
               onClick={watch.watching ? watch.stop : watch.start}
               className={cn(
-                "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
+                "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
                 watch.watching ? "bg-rose-600 hover:bg-rose-500" : "bg-indigo-600 hover:bg-indigo-500"
               )}
             >
@@ -313,7 +315,7 @@ export function WiredPanel({
           )}
           <button
             onClick={() => downloadBridgeBat("wired")}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
             <Download className="h-4 w-4" />
             Download wired scanner (.bat)
@@ -333,13 +335,13 @@ export function WiredPanel({
             <p className="text-xs">{watch.error}</p>
           </div>
         )}
-      </div>
+      </Card>
 
       {info ? (
         <>
           {/* Adapters + gateway */}
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <Card>
               <div className="flex items-center gap-2">
                 <Network className="h-4 w-4 text-slate-500" />
                 <h2 className="text-sm font-semibold text-slate-900">Wired adapter</h2>
@@ -352,18 +354,18 @@ export function WiredPanel({
               ) : (
                 <div className="mt-3 space-y-3">
                   {info.adapters.map((a) => (
-                    <div key={`${a.name}-${a.mac}`} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                    <div key={`${a.name}-${a.mac}`} className="rounded-xl bg-slate-50 p-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-semibold text-slate-800">{a.name}</span>
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-micro font-bold text-emerald-700">
                           {a.status || "Up"}
                         </span>
                         {a.linkSpeed && (
-                          <span className="text-[11px] text-slate-500">{a.linkSpeed}</span>
+                          <span className="text-xs text-slate-500">{a.linkSpeed}</span>
                         )}
                       </div>
                       {a.description && (
-                        <p className="mt-0.5 text-[11px] text-slate-400">{a.description}</p>
+                        <p className="mt-0.5 text-xs text-slate-400">{a.description}</p>
                       )}
                       <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
                         <Datum label="Adapter MAC" value={a.mac} mono />
@@ -384,9 +386,9 @@ export function WiredPanel({
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <Card>
               <div className="flex items-center gap-2">
                 <Router className="h-4 w-4 text-slate-500" />
                 <h2 className="text-sm font-semibold text-slate-900">Gateway / first hop</h2>
@@ -401,25 +403,16 @@ export function WiredPanel({
                   mono
                 />
               </dl>
-              <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-                The gateway MAC and its OUI tell you the router/switch vendor, but not which port
-                you are on. Only LLDP/CDP (or SNMP access to the switch) reveals the port.
-              </p>
-            </div>
+            </Card>
           </div>
 
           {/* Switch identity */}
-          <div
-            className={cn(
-              "rounded-2xl border p-5 shadow-sm",
-              info.lldp ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-white" : "border-amber-200 bg-amber-50"
-            )}
-          >
+          <Card tone={info.lldp ? "success" : "warning"}>
             <div className="flex items-center gap-2">
               <Server className={cn("h-4 w-4", info.lldp ? "text-emerald-600" : "text-amber-600")} />
               <h2 className="text-sm font-semibold text-slate-900">Switch identity</h2>
               {info.lldp && (
-                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-micro font-bold text-white">
                   {info.lldp.source}
                 </span>
               )}
@@ -458,10 +451,10 @@ export function WiredPanel({
                   : ""}
               </p>
             )}
-          </div>
+          </Card>
 
           {/* Neighbours */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <Card padding="none" className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
               <div className="flex items-center gap-2">
                 <Network className="h-4 w-4 text-slate-500" />
@@ -493,7 +486,7 @@ export function WiredPanel({
                         <span className="flex items-center gap-1.5">
                           {n.ip}
                           {n.isGateway && (
-                            <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                            <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-micro font-bold text-indigo-700">
                               GATEWAY
                             </span>
                           )}
@@ -507,27 +500,31 @@ export function WiredPanel({
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
         </>
       ) : (
-        <div className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-relaxed text-slate-500">
+        <Card
+          tone="muted"
+          padding="sm"
+          className="flex items-start gap-2 text-xs leading-relaxed text-slate-500"
+        >
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
           <p>
             No wired snapshot yet. Use <b>start-wired.bat</b>, the portable scanner, or paste{" "}
             <code>ipconfig /all</code> plus <code>arp -a</code> below to inspect the LAN.
           </p>
-        </div>
+        </Card>
       )}
 
       {/* Save current socket */}
-      <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-5 shadow-sm">
+      <Card tone="accent">
         <div className="flex items-center gap-2">
           <Save className="h-4 w-4 text-indigo-600" />
           <h2 className="text-sm font-semibold text-slate-900">Save this wall socket</h2>
         </div>
         <p className="mt-0.5 text-xs text-slate-500">
-          Give the socket a label you will recognise, then map it to a building/floor/room. Switch
-          and port auto-fill from LLDP when available — type them yourself when it is not.
+          Label the socket and map it to a building, floor, and room — switch and port auto-fill
+          from LLDP when available.
         </p>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -583,9 +580,9 @@ export function WiredPanel({
             onClick={save}
             disabled={!(socket.trim() || suggested)}
             className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition",
+              "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition",
               !(socket.trim() || suggested)
-                ? "cursor-not-allowed bg-slate-300"
+                ? "cursor-not-allowed bg-slate-200 text-slate-500"
                 : "bg-indigo-600 hover:bg-indigo-500"
             )}
           >
@@ -606,10 +603,10 @@ export function WiredPanel({
             )}
           </span>
         </div>
-      </div>
+      </Card>
 
       {/* Registry */}
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <Card padding="none" className="overflow-x-auto">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
           <h2 className="text-sm font-semibold text-slate-900">Wired port map</h2>
           <span className="text-xs text-slate-400">{rows.length} sockets</span>
@@ -642,28 +639,28 @@ export function WiredPanel({
                   <input
                     value={entry.socket}
                     onChange={(e) => patch(key, { socket: e.target.value })}
-                    className="w-28 rounded-md border border-slate-200 px-2 py-1 font-mono text-xs outline-none focus:border-indigo-400"
+                    className="w-28 rounded-md border border-slate-200 px-2 py-2 font-mono text-xs focus:border-indigo-400"
                   />
                 </td>
                 <td className="px-4 py-2">
                   <input
                     value={entry.building}
                     onChange={(e) => patch(key, { building: e.target.value })}
-                    className="w-24 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
+                    className="w-24 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                   />
                 </td>
                 <td className="px-4 py-2">
                   <input
                     value={entry.floor}
                     onChange={(e) => patch(key, { floor: e.target.value })}
-                    className="w-24 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
+                    className="w-24 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                   />
                 </td>
                 <td className="px-4 py-2">
                   <input
                     value={entry.location}
                     onChange={(e) => patch(key, { location: e.target.value })}
-                    className="w-32 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
+                    className="w-32 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -671,7 +668,7 @@ export function WiredPanel({
                     value={entry.switchName}
                     onChange={(e) => patch(key, { switchName: e.target.value })}
                     placeholder="switch"
-                    className="w-28 rounded-md border border-slate-200 px-2 py-1 font-mono text-xs outline-none focus:border-indigo-400"
+                    className="w-28 rounded-md border border-slate-200 px-2 py-2 font-mono text-xs focus:border-indigo-400"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -679,7 +676,7 @@ export function WiredPanel({
                     value={entry.switchPort}
                     onChange={(e) => patch(key, { switchPort: e.target.value })}
                     placeholder="port"
-                    className="w-20 rounded-md border border-slate-200 px-2 py-1 font-mono text-xs outline-none focus:border-indigo-400"
+                    className="w-20 rounded-md border border-slate-200 px-2 py-2 font-mono text-xs focus:border-indigo-400"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -687,12 +684,17 @@ export function WiredPanel({
                     value={entry.vlan}
                     onChange={(e) => patch(key, { vlan: e.target.value })}
                     placeholder="vlan"
-                    className="w-16 rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-indigo-400"
+                    className="w-16 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                   />
                 </td>
                 <td className="px-4 py-2 font-mono text-xs text-slate-600">
                   {entry.gatewayMac ? (
-                    <span title={entry.gatewayVendor || undefined}>{entry.gatewayMac}</span>
+                    <span title={entry.gatewayVendor || undefined}>
+                      {entry.gatewayMac}
+                      {entry.gatewayVendor && (
+                        <span className="sr-only"> ({entry.gatewayVendor})</span>
+                      )}
+                    </span>
                   ) : (
                     "—"
                   )}
@@ -700,7 +702,7 @@ export function WiredPanel({
                 <td className="px-4 py-2 text-right">
                   <button
                     onClick={() => remove(key)}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-rose-500 hover:text-rose-700"
+                    className="inline-flex min-h-9 items-center gap-1 px-2 text-xs font-medium text-rose-500 hover:text-rose-700"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     Delete
@@ -710,14 +712,11 @@ export function WiredPanel({
             ))}
           </tbody>
         </table>
-      </div>
+      </Card>
 
       {/* Manual paste */}
-      <div
-        className={cn(
-          "rounded-2xl border bg-white p-5 shadow-sm transition",
-          dragOver ? "border-indigo-400 ring-2 ring-indigo-100" : "border-slate-200"
-        )}
+      <Card
+        className={cn("transition", dragOver && "border-indigo-400 ring-2 ring-indigo-100")}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -742,7 +741,7 @@ export function WiredPanel({
           value={paste}
           onChange={(e) => setPaste(e.target.value)}
           placeholder="Paste wired snapshot, ipconfig /all, or arp -a output here…"
-          className="mt-3 h-32 w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] leading-relaxed text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 sm:text-xs"
+          className="mt-3 h-32 w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-700 focus:border-indigo-400 sm:text-xs"
         />
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-slate-500">
@@ -768,25 +767,23 @@ export function WiredPanel({
             onClick={ingestPaste}
             disabled={!pastePreview || (!pastePreview.adapters.length && !pastePreview.neighbors.length && !pastePreview.lldp)}
             className={cn(
-              "w-full rounded-lg px-4 py-2 text-sm font-semibold text-white transition sm:w-auto",
+              "min-h-11 w-full rounded-lg px-4 py-2 text-sm font-semibold text-white transition sm:w-auto",
               !pastePreview || (!pastePreview.adapters.length && !pastePreview.neighbors.length && !pastePreview.lldp)
-                ? "cursor-not-allowed bg-slate-300"
+                ? "cursor-not-allowed bg-slate-200 text-slate-500"
                 : "bg-indigo-600 hover:bg-indigo-500"
             )}
           >
             Analyze snapshot →
           </button>
         </div>
-      </div>
+      </Card>
 
-      <div className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-relaxed text-slate-500">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+      <HowItWorks>
         <p>
-          Everything stays on this machine — wired snapshots and the port map are only read from the
-          local scanner and stored in <code>localStorage</code>. Only map networks you are
-          authorised to document.
+          The gateway MAC and its OUI tell you the router/switch vendor, but not which port you are
+          on. Only LLDP/CDP (or SNMP access to the switch) reveals the port.
         </p>
-      </div>
+      </HowItWorks>
     </div>
   );
 }
@@ -803,8 +800,8 @@ function Stat({
   tone?: "good" | "muted";
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+    <div className="rounded-xl bg-slate-50 px-3 py-2">
+      <p className="label-caps text-slate-400">{label}</p>
       <p
         className={cn(
           "mt-0.5 text-sm font-semibold",
@@ -813,7 +810,7 @@ function Stat({
       >
         {value}
       </p>
-      <p className="text-[10px] text-slate-400">{hint}</p>
+      <p className="text-micro text-slate-400">{hint}</p>
     </div>
   );
 }
@@ -821,8 +818,8 @@ function Stat({
 function Datum({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</dt>
-      <dd className={cn("truncate text-slate-700", mono && "font-mono text-[11px]")} title={value}>
+      <dt className="label-caps text-slate-400">{label}</dt>
+      <dd className={cn("truncate text-slate-700", mono && "font-mono text-xs")} title={value}>
         {value}
       </dd>
     </div>
@@ -842,12 +839,12 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</span>
+      <span className="label-caps text-slate-400">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+        className="mt-0.5 min-h-11 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400"
       />
     </label>
   );
