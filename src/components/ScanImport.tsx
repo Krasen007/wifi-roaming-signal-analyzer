@@ -236,7 +236,7 @@ export function ScanImport({
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
-        <p className="mt-2 text-xs text-slate-400">
+        <p className="mt-2 text-xs text-slate-600">
           Leave the PowerShell window open while you walk; stop it with Ctrl+C when done.
         </p>
       </Card>
@@ -304,7 +304,7 @@ export function ScanImport({
                   </span>
                   <span className="font-mono text-xs">{live.fileName}</span>
                   {live.lastUpdate && (
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-slate-600">
                       · updated {new Date(live.lastUpdate).toLocaleTimeString()}
                     </span>
                   )}
@@ -449,7 +449,7 @@ function StatusItem({
 }) {
   return (
     <div className="rounded-xl bg-slate-50 px-3 py-2">
-      <p className="label-caps text-slate-400">{label}</p>
+      <p className="label-caps text-slate-600">{label}</p>
       <p
         className={cn(
           "mt-0.5 text-sm font-semibold",
@@ -458,7 +458,7 @@ function StatusItem({
       >
         {value}
       </p>
-      <p className="text-micro text-slate-400">{hint}</p>
+      <p className="text-micro text-slate-600">{hint}</p>
     </div>
   );
 }

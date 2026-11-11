@@ -218,7 +218,6 @@ export default function App() {
             <button
               type="button"
               onClick={() => setTab("dashboard")}
-              aria-label="Go to dashboard"
               className="flex h-11 w-11 items-center justify-center"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
@@ -340,7 +339,7 @@ export default function App() {
         )}
       </main>
 
-      <footer className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-slate-400">
+      <footer className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-slate-600">
         FloorScope runs entirely in your browser. scan.txt and wired.txt never leave your PC.
       </footer>
     </div>

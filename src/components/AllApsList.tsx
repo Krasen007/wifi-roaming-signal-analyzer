@@ -91,7 +91,7 @@ export function AllApsList({
                   )}
                   <BandTag band={a.band} />
                 </div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 font-mono text-xs text-slate-400">
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 font-mono text-xs text-slate-600">
                   <span>{a.bssid}</span>
                   {bld && (
                     <span className="inline-flex items-center gap-0.5 text-slate-500">
@@ -109,7 +109,7 @@ export function AllApsList({
               <Trend delta={delta} />
               <div className="text-right">
                 <div className={cn("text-sm font-bold", q2.color)}>{a.dbm} dBm</div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-slate-600">
                   {a.percent}% · {q2.label}
                 </div>
               </div>

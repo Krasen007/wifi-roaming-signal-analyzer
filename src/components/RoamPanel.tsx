@@ -155,7 +155,7 @@ export function RoamPanel({
         <div>
           <h3 className="text-xs font-medium text-slate-500">Connection events</h3>
           {roams.length === 0 ? (
-            <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400">
+            <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
               {live.watching
                 ? "No connection changes yet — roams and drops will be logged here while you walk around."
                 : "Roams and disconnects will be logged here as the connected AP changes."}
@@ -167,7 +167,7 @@ export function RoamPanel({
                   key={r.t}
                   className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1"
                 >
-                  <span className="font-mono text-micro text-slate-400">
+                  <span className="font-mono text-micro text-slate-600">
                     {new Date(r.t).toLocaleTimeString()}
                   </span>
                   <span className="inline-flex min-w-0 items-center gap-1 text-xs text-slate-600">

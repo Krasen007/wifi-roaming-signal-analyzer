@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
-@theme {
+:root {
   --text-micro: 0.6875rem; /* 11px at default root */
   --text-micro--line-height: 1rem;
 }
 
-@utility label-caps {
-  font-size: var(--text-micro);
-  line-height: var(--text-micro--line-height);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+@layer utilities {
+  .label-caps {
+    font-size: var(--text-micro);
+    line-height: var(--text-micro--line-height);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
 }
 
 @layer base {
@@ -22,5 +24,50 @@
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 2px solid var(--color-indigo-600);
     outline-offset: 2px;
+  }
+}
+
+/* Responsive tables: stack rows below 768px instead of forcing horizontal scroll */
+@media (max-width: 767px) {
+  .responsive-table table,
+  .responsive-table thead,
+  .responsive-table tbody,
+  .responsive-table th,
+  .responsive-table td,
+  .responsive-table tr {
+    display: block;
+  }
+
+  .responsive-table thead {
+    display: none;
+  }
+
+  .responsive-table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .responsive-table td {
+    border: none;
+    position: relative;
+    padding-left: 50%;
+    white-space: normal;
+  }
+
+  .responsive-table td:before {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.75rem;
+    width: 45%;
+    padding-right: 0.5rem;
+    white-space: nowrap;
+    content: attr(data-label);
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 }

@@ -22,13 +22,13 @@ export function SignalHero({ strongest, activeSsid, registry, isConnected = fals
     <Card tone="hero" padding="lg" className="lg:col-span-2">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-600">
             {isConnected ? "Connected AP" : "Best AP"} for “{activeSsid}”
           </p>
           <p className="mt-1 truncate text-2xl font-bold">
             {bssidDisplayName(registry, strongest.bssid)}
           </p>
-          <p className="mt-0.5 font-mono text-xs text-slate-400">{strongest.bssid}</p>
+          <p className="mt-0.5 font-mono text-xs text-slate-600">{strongest.bssid}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1">
               <MapPin className="h-3 w-3" />
@@ -46,7 +46,7 @@ export function SignalHero({ strongest, activeSsid, registry, isConnected = fals
         <div className="text-right">
           <div className="text-3xl font-black">
             {strongest.dbm}
-            <span className="text-sm font-medium text-slate-400"> dBm</span>
+            <span className="text-sm font-medium text-slate-500"> dBm</span>
           </div>
           <div className="mt-1 flex items-center justify-end gap-2">
             <SignalBars dbm={strongest.dbm} />

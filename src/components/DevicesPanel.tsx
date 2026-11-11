@@ -91,11 +91,11 @@ export function DevicesPanel({
                       )}
                     </span>
                     <BandTag band={m.band} />
-                    <span className="font-mono text-xs text-slate-400">{m.dbm} dBm</span>
+                    <span className="font-mono text-xs text-slate-600">{m.dbm} dBm</span>
                   </div>
                 ))}
               </div>
-              <p className="mt-2 font-mono text-micro text-slate-400">
+              <p className="mt-2 font-mono text-micro text-slate-600">
                 {dev.members.map((m) => m.bssid.slice(-5)).join(" · ")}
               </p>
             </div>

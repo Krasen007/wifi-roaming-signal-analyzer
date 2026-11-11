@@ -22,7 +22,7 @@ export function OtherNetworks({ aps, activeSsid }: OtherNetworksProps) {
             <SignalBars dbm={a.dbm} />
             <span className="min-w-0 flex-1 truncate text-sm text-slate-700">{a.ssid}</span>
             <BandTag band={a.band} />
-            <span className="w-20 text-right font-mono text-xs text-slate-400">
+            <span className="w-20 text-right font-mono text-xs text-slate-600">
               {a.dbm} dBm
             </span>
           </div>

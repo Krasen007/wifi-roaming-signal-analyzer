@@ -307,7 +307,7 @@ export function LiveHistoryChart({
 
       <div className="mt-2 flex flex-wrap gap-2">
         {series.length === 0 && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600">
             No signal history yet — new scans will draw the lines again.
           </p>
         )}
@@ -321,7 +321,7 @@ export function LiveHistoryChart({
               onClick={() => toggle(s.bssid)}
               aria-pressed={isFocused}
               className={cn(
-                "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs transition",
+                "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs transition",
                 isFocused
                   ? "border-indigo-400 bg-indigo-50 text-indigo-800 ring-1 ring-indigo-200"
                   : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50",
@@ -337,7 +337,7 @@ export function LiveHistoryChart({
               {seriesName}
               <BandTag band={bandOf(s.bssid)} />
               {s.lastReal ? (
-                <span className="font-mono text-micro text-slate-400">
+                <span className="font-mono text-micro text-slate-600">
                   {s.lastReal.dbm}dBm
                 </span>
               ) : null}

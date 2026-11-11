@@ -156,8 +156,8 @@ export function RegistryManager({
         ))}
       </datalist>
 
-      <Card padding="none" className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-sm">
+      <Card padding="none" className="overflow-x-auto responsive-table">
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-500">
               <SortableTh
@@ -183,7 +183,7 @@ export function RegistryManager({
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-600">
                   No APs yet — import a scan first, or add a BSSID manually below.
                 </td>
               </tr>
@@ -211,17 +211,17 @@ export function RegistryManager({
                         : ""
                   )}
                 >
-                  <td className="px-1 py-1">
+                  <td className="px-1 py-1" data-label="Signal">
                     {row.ap ? (
                       <div className="flex items-center gap-2">
                         <SignalBars dbm={row.ap.dbm} />
-                        <span className="text-xs text-slate-400">{row.ap.dbm}</span>
+                        <span className="text-xs text-slate-600">{row.ap.dbm}</span>
                       </div>
                     ) : (
                       <span className="text-xs text-slate-300">offline</span>
                     )}
                   </td>
-                  <td className="px-1 py-1 font-mono text-xs text-slate-700">
+                  <td className="px-1 py-1 font-mono text-xs text-slate-700" data-label="BSSID">
                     <div className="flex items-center gap-2">
                       {row.bssid}
                       {isConnected && (
@@ -231,39 +231,39 @@ export function RegistryManager({
                       )}
                     </div>
                   </td>
-                  <td className="px-1 py-1">{band && <BandTag band={band} />}</td>
-                  <td className="px-1 py-1 text-slate-600">{row.ap?.ssid ?? "—"}</td>
-                  <td className="px-1 py-1">
+                  <td className="px-1 py-1" data-label="Band">{band && <BandTag band={band} />}</td>
+                  <td className="px-1 py-1 text-slate-600" data-label="SSID">{row.ap?.ssid ?? "—"}</td>
+                  <td className="px-1 py-1" data-label="Building">
                     <input
                       list="building-suggestions"
                       value={row.entry?.building ?? ""}
                       onChange={(e) => update(row.bssid, { building: e.target.value })}
                       placeholder="e.g. HQ"
-                      className="min-h-9 w-28 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
+                      className="min-h-11 w-28 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                     />
                   </td>
-                  <td className="px-1 py-1">
+                  <td className="px-1 py-1" data-label="Floor">
                     <input
                       list="floor-suggestions"
                       value={row.entry?.floor ?? ""}
                       onChange={(e) => update(row.bssid, { floor: e.target.value })}
                       placeholder="e.g. 2nd floor"
-                      className="min-h-9 w-28 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
+                      className="min-h-11 w-28 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                     />
                   </td>
-                  <td className="px-1 py-1">
+                  <td className="px-1 py-1" data-label="Location">
                     <input
                       value={row.entry?.location ?? ""}
                       onChange={(e) => update(row.bssid, { location: e.target.value })}
                       placeholder="e.g. Hallway, 2nd floor"
-                      className="min-h-9 w-32 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
+                      className="min-h-11 w-32 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
                     />
                   </td>
                   <td className="px-1 py-1 text-right">
                     {row.entry && (
                       <button
                         onClick={() => remove(row.bssid)}
-                        className="inline-flex min-h-9 items-center px-2 text-xs font-medium text-rose-500 hover:text-rose-700"
+                        className="inline-flex min-h-11 items-center px-2 text-xs font-medium text-rose-500 hover:text-rose-700"
                       >
                         Clear
                       </button>
@@ -331,7 +331,7 @@ function SortableTh({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className="inline-flex min-h-9 items-center gap-1 whitespace-nowrap hover:text-slate-800"
+        className="inline-flex min-h-11 items-center gap-1 whitespace-nowrap hover:text-slate-800"
       >
         {label}
         <Icon className={cn("h-3.5 w-3.5", active ? "text-indigo-500" : "text-slate-300")} />
