@@ -126,7 +126,7 @@ export function DashboardControls({
             </span>
             <span role="status" aria-live="polite">LIVE</span>
             {live.lastUpdate && (
-              <span aria-hidden="true" className="font-normal text-emerald-600">
+              <span className="font-normal text-emerald-600">
                 {new Date(live.lastUpdate).toLocaleTimeString()}
               </span>
             )}
