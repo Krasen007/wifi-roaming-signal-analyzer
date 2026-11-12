@@ -1,8 +1,69 @@
 @import "tailwindcss";
 
-:root {
-  --text-micro: 0.6875rem; /* 11px at default root */
-  --text-micro--line-height: 1rem;
+@layer base {
+  :root {
+    --fs-bg: #ffffff;
+    --fs-bg-secondary: #f8fafc;
+    --fs-bg-tertiary: #f1f5f9;
+    --fs-border: #e2e8f0;
+    --fs-border-hover: #cbd5e1;
+    --fs-text: #0f172a;
+    --fs-text-secondary: #475569;
+    --fs-text-muted: #94a3b8;
+    --fs-primary: #4338ca;
+    --fs-primary-hover: #3730a3;
+    --fs-primary-light: #eef2ff;
+    --fs-success: #15803d;
+    --fs-success-light: #f0fdf4;
+    --fs-warning: #b45309;
+    --fs-warning-light: #fffbeb;
+    --fs-danger: #be123c;
+    --fs-danger-light: #fff1f2;
+    --fs-radius-sm: 0.375rem;
+    --fs-radius-md: 0.625rem;
+    --fs-radius-lg: 0.75rem;
+    --fs-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --fs-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08),
+      0 2px 4px -2px rgb(0 0 0 / 0.04);
+    --text-micro: 0.6875rem;
+    --text-micro--line-height: 1rem;
+  }
+
+  .dark {
+    --fs-bg: #0b0f19;
+    --fs-bg-secondary: #111827;
+    --fs-bg-tertiary: #1e293b;
+    --fs-border: #334155;
+    --fs-border-hover: #475569;
+    --fs-text: #f8fafc;
+    --fs-text-secondary: #cbd5e1;
+    --fs-text-muted: #94a3b8;
+    --fs-primary: #818cf8;
+    --fs-primary-hover: #a5b4fc;
+    --fs-primary-light: #1e1b4b;
+    --fs-success: #4ade80;
+    --fs-success-light: #064e3b;
+    --fs-warning: #fbbf24;
+    --fs-warning-light: #451a03;
+    --fs-danger: #fb7185;
+    --fs-danger-light: #450a0a;
+  }
+
+  html,
+  body {
+    background-color: var(--fs-bg);
+    color: var(--fs-text);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--fs-primary);
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
@@ -12,18 +73,6 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-  }
-}
-
-@layer base {
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
-  }
-
-  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-    outline: 2px solid var(--color-indigo-600);
-    outline-offset: 2px;
   }
 }
 

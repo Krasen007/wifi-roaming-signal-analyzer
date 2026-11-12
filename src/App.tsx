@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Radio, TriangleAlert } from "lucide-react";
 import type {
   AccessPoint,
   Band,
@@ -31,7 +30,7 @@ import { ScanImport } from "./components/ScanImport";
 import { Dashboard } from "./components/Dashboard";
 import { RegistryManager } from "./components/RegistryManager";
 import { WiredPanel } from "./components/WiredPanel";
-import { cn } from "./utils/cn";
+import { Header } from "./components/ui/Header";
 
 type Tab = "dashboard" | "import" | "registry" | "wired";
 
@@ -203,94 +202,22 @@ export default function App() {
   const registeredCount = Object.values(registry).filter((e) => e.floor || e.location).length;
 
   const wiredSocketCount = Object.keys(wiredRegistry).length;
-  const tabs: { id: Tab; label: string; badge?: number }[] = [
-    { id: "dashboard", label: "Dashboard" },
-    { id: "import", label: "Live setup", badge: aps.length || undefined },
-    { id: "registry", label: "AP Registry", badge: registeredCount || undefined },
-    { id: "wired", label: "Wired LAN", badge: wiredSocketCount || undefined },
-  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-stretch gap-3 px-4">
-          <div className="flex shrink-0 items-center gap-2 py-3">
-            <button
-              type="button"
-              onClick={() => setTab("dashboard")}
-              className="flex h-11 w-11 items-center justify-center"
-              aria-label="Open dashboard"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M5 12.55a11 11 0 0 1 14 0" />
-                  <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                  <line x1="12" y1="20" x2="12.01" y2="20" />
-                </svg>
-              </div>
-            </button>
-            <div className="min-w-0">
-              <h1 className="text-lg font-bold tracking-tight">FloorScope</h1>
-              <p className="truncate text-xs text-slate-500">Live WiFi floor-roaming analyzer</p>
-            </div>
-          </div>
-          <nav className="flex min-w-0 items-stretch gap-1 overflow-x-auto overflow-y-hidden pb-px">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  "relative -mb-px flex min-h-11 items-center border-b-2 px-3 py-2.5 text-sm font-medium transition",
-                  tab === t.id
-                    ? "border-indigo-600 text-indigo-700"
-                    : "border-transparent text-slate-500 hover:text-slate-800"
-                )}
-              >
-                {t.label}
-                {t.badge != null && (
-                  <span className="ml-1.5 rounded-full bg-indigo-100 px-1.5 py-0.5 text-micro font-bold text-indigo-700">
-                    {t.badge}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-          <div className="ml-auto hidden shrink-0 items-center gap-2 sm:flex">
-            {(watching || wiredLive.watching) && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                <Radio className="h-3.5 w-3.5" />
-                Live
-              </span>
-            )}
-            {((live.error && !watching) || (wiredLive.error && !wiredLive.watching)) && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
-                <TriangleAlert className="h-3.5 w-3.5" />
-                File lost
-              </span>
-            )}
-            {format && (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
-                {format}
-              </span>
-            )}
-          </div>
-          <div className="sr-only" role="status" aria-live="polite">
-            {watching || wiredLive.watching ? "Live scanning active. " : ""}
-            {(live.error && !watching) || (wiredLive.error && !wiredLive.watching)
-              ? "Scan file lost."
-              : ""}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[var(--fs-bg)] text-[var(--fs-text)]">
+      <Header
+        tab={tab}
+        setTab={setTab}
+        live={live}
+        format={format}
+        watching={watching || wiredLive.watching}
+        badges={{
+          dashboard: undefined,
+          import: aps.length || undefined,
+          registry: registeredCount || undefined,
+          wired: wiredSocketCount || undefined,
+        }}
+      />
 
       <main className="mx-auto max-w-5xl px-4 py-6">
         {tab === "dashboard" && (

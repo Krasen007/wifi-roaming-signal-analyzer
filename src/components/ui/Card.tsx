@@ -14,14 +14,14 @@ export type CardTone =
 export type CardPadding = "none" | "sm" | "md" | "lg";
 
 const tones: Record<CardTone, string> = {
-  default: "border-slate-200 bg-white",
+  default: "border-[var(--fs-border)] bg-[var(--fs-bg)]",
   accent: "border-indigo-200 bg-gradient-to-br from-indigo-50 to-white",
   success: "border-emerald-200 bg-gradient-to-br from-emerald-50 to-white",
   warning: "border-amber-200 bg-amber-50",
   danger: "border-rose-200 bg-rose-50",
-  muted: "border-slate-200 bg-slate-50",
+  muted: "border-[var(--fs-border)] bg-[var(--fs-bg-secondary)]",
   hero: "border-slate-200 bg-gradient-to-br from-slate-900 to-slate-800 text-white",
-  dashed: "border-dashed border-slate-300 bg-white",
+  dashed: "border-dashed border-[var(--fs-border)] bg-[var(--fs-bg)]",
 };
 
 const paddings: Record<CardPadding, string> = {
