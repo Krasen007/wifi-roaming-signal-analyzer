@@ -35,7 +35,7 @@ import { Header } from "./components/ui/Header";
 type Tab = "dashboard" | "import" | "registry" | "wired";
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("import");
+  const [tab, setTab] = useState<Tab>("dashboard");
   const [aps, setAps] = useState<AccessPoint[]>([]);
   const [format, setFormat] = useState("");
   const [registry, setRegistry] = useState<Registry>({});
@@ -210,7 +210,7 @@ export default function App() {
         setTab={setTab}
         live={live}
         format={format}
-        watching={watching || wiredLive.watching}
+        watching={(watching && !live.stale) || wiredLive.watching}
         badges={{
           dashboard: undefined,
           import: aps.length || undefined,
@@ -232,6 +232,7 @@ export default function App() {
             setConnectedBssid={updateConnected}
             live={{
               watching: live.watching,
+              stale: live.stale,
               fileName: live.fileName,
               lastUpdate: live.lastUpdate,
             }}
@@ -240,10 +241,16 @@ export default function App() {
             lastSeenBand={lastSeenBand}
             roams={roams}
             onClearHistory={clearHistory}
+            onOpenSetup={() => setTab("import")}
           />
         )}
         {tab === "import" && (
-          <ScanImport onParsed={handleParsed} live={live} aps={aps} />
+          <ScanImport
+            onParsed={handleParsed}
+            live={live}
+            aps={aps}
+            onGoToDashboard={() => setTab("dashboard")}
+          />
         )}
         {tab === "registry" && (
           <RegistryManager
@@ -267,8 +274,9 @@ export default function App() {
         )}
       </main>
 
-      <footer className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-slate-600">
-        FloorScope runs entirely in your browser. scan.txt and wired.txt never leave your PC.
+      <footer className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-[var(--fs-text-muted)]">
+        FloorScope runs entirely in your browser. Your scans and saved locations never leave this
+        computer.
       </footer>
     </div>
   );

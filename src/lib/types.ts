@@ -43,6 +43,7 @@ export interface RoamEvent {
 
 export interface LiveMeta {
   watching: boolean;
+  stale: boolean;
   fileName: string | null;
   lastUpdate: number | null;
 }

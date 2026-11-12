@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronsUpDown, MapPin } from "lucide-react";
 import type { AccessPoint, Band, Registry, RegistryEntry } from "../lib/types";
+import { quality } from "../lib/signal";
+import { registryValueSets } from "../lib/labels";
 import { BandTag } from "./BandTag";
 import { SignalBars } from "./SignalBars";
 import { Card } from "./ui/Card";
 import { cn } from "../utils/cn";
-
-import { registryValueSets } from "../lib/labels";
 
 type SortKey = "signal" | "bssid" | "ssid" | "band" | "building" | "floor" | "location";
 type SortDir = "asc" | "desc";
@@ -59,7 +59,6 @@ export function RegistryManager({
     );
   };
 
-  // union of scanned bssids and registered bssids
   const rows = useMemo(() => {
     const map = new Map<string, Row>();
     for (const ap of aps) map.set(ap.bssid, { bssid: ap.bssid, ap });
@@ -95,7 +94,6 @@ export function RegistryManager({
     const prev = registry[bssid] ?? { bssid, building: "", floor: "", location: "" };
     const next: RegistryEntry = { ...prev, ...patch, bssid };
     const r = { ...registry, [bssid]: next };
-    // Keep the entry if it has a remembered band, even without a location.
     if (!next.building && !next.floor && !next.location && !next.band) delete r[bssid];
     onChange(r);
   };
@@ -106,8 +104,6 @@ export function RegistryManager({
     onChange(r);
   };
 
-  // Free-text fields: suggestions reuse values you've already used, so the same
-  // floor name in different buildings (or custom building names) keeps working.
   const { floorSuggestions, buildingSuggestions } = useMemo(() => {
     const { floors, buildings } = registryValueSets(registry);
     return { floorSuggestions: Array.from(floors), buildingSuggestions: Array.from(buildings) };
@@ -121,12 +117,12 @@ export function RegistryManager({
   const addManual = () => {
     const raw = manualBssid.trim();
     if (!raw) {
-      setBssidError("Enter a BSSID first.");
+      setBssidError("Enter an access point ID first.");
       return;
     }
     const b = raw.toLowerCase().replace(/-/g, ":");
     if (!/^([0-9a-f]{2}:){5}[0-9a-f]{2}$/.test(b)) {
-      setBssidError("Use six hex octets, e.g. aa:bb:cc:dd:ee:ff.");
+      setBssidError("Use six pairs of characters, for example aa:bb:cc:dd:ee:ff.");
       return;
     }
     setBssidError(null);
@@ -136,13 +132,32 @@ export function RegistryManager({
 
   return (
     <div className="space-y-4">
-      <h2 className="sr-only">AP Registry</h2>
-      <Card tone="accent" padding="sm" className="text-sm text-indigo-900">
-        <b>The key to your problem:</b> assign each BSSID (a physical AP's MAC address) to a{" "}
-        <b>building</b> and <b>floor</b>. Since all your APs broadcast the same SSID, the BSSID is
-        the only reliable way to know exactly which AP you're near. All fields are free text — use
-        whatever names fit your buildings ("HQ", "Warehouse", "Mezzanine", "Floor 7"…). Tip: stand
-        next to each AP, run a scan, and the strongest BSSID is that AP.
+      <Card tone="accent">
+        <div className="flex items-start gap-2.5">
+          <div className="rounded-lg bg-[var(--fs-primary)] p-2 text-white">
+            <MapPin className="h-4 w-4" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-[var(--fs-text)]">
+              Where are your access points?
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+              Tell FloorScope which building and floor each access point is on. Once mapped, it can
+              warn you when you are connected to the wrong floor. All fields are free text — use the
+              names your team already uses.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-xl bg-[var(--fs-bg)] px-3 py-2.5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+          <p>
+            Only the access points you fill in are checked for wrong-floor warnings. You do not
+            need to map every network in range.
+          </p>
+          <p className="mt-1.5 text-[var(--fs-text-muted)]">
+            Tip: stand next to an access point, run a scan, and the strongest row is that box.
+          </p>
+        </div>
       </Card>
 
       <datalist id="floor-suggestions">
@@ -159,32 +174,30 @@ export function RegistryManager({
       <Card padding="none" className="overflow-x-auto responsive-table">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-500">
+            <tr className="border-b border-[var(--fs-border)] bg-[var(--fs-bg-secondary)] text-left text-xs text-[var(--fs-text-secondary)]">
+              <SortableTh label="Signal" sortKey="signal" sort={sort} onSort={toggleSort} />
               <SortableTh
-                label="Signal"
-                sortKey="signal"
-                sort={sort}
-                onSort={toggleSort}
-              />
-              <SortableTh
-                label="BSSID (AP hardware)"
+                label="Access point ID"
                 sortKey="bssid"
                 sort={sort}
                 onSort={toggleSort}
               />
               <SortableTh label="Band" sortKey="band" sort={sort} onSort={toggleSort} />
-              <SortableTh label="SSID" sortKey="ssid" sort={sort} onSort={toggleSort} />
+              <SortableTh label="Wi-Fi name" sortKey="ssid" sort={sort} onSort={toggleSort} />
               <SortableTh label="Building" sortKey="building" sort={sort} onSort={toggleSort} />
               <SortableTh label="Floor" sortKey="floor" sort={sort} onSort={toggleSort} />
-              <SortableTh label="Location" sortKey="location" sort={sort} onSort={toggleSort} />
+              <SortableTh label="Room / area" sortKey="location" sort={sort} onSort={toggleSort} />
               <th className="px-1 py-1"></th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-600">
-                  No APs yet — import a scan first, or add a BSSID manually below.
+                <td
+                  colSpan={8}
+                  className="px-4 py-8 text-center text-sm text-[var(--fs-text-secondary)]"
+                >
+                  No access points yet. Import a scan first, or add one by ID below.
                 </td>
               </tr>
             )}
@@ -196,18 +209,16 @@ export function RegistryManager({
                 row.entry?.band
               );
               const isConnected = row.bssid === connectedBssid;
-              // Remembered band takes precedence (shows for offline APs too),
-              // falling back to the band from the current scan.
               const band: Band | undefined = row.entry?.band ?? row.ap?.band;
               return (
                 <tr
                   key={row.bssid}
                   className={cn(
-                    "border-b border-slate-100 last:border-0",
+                    "border-b border-[var(--fs-border)] last:border-0",
                     isConnected
-                      ? "bg-indigo-50 ring-1 ring-inset ring-indigo-200"
+                      ? "bg-[var(--fs-primary-light)]"
                       : registered
-                        ? "bg-emerald-50/40"
+                        ? "bg-[var(--fs-success-light)]"
                         : ""
                   )}
                 >
@@ -215,31 +226,44 @@ export function RegistryManager({
                     {row.ap ? (
                       <div className="flex items-center gap-2">
                         <SignalBars dbm={row.ap.dbm} />
-                        <span className="text-xs text-slate-600">{row.ap.dbm}</span>
+                        <span
+                          className="font-mono text-xs text-[var(--fs-text-secondary)]"
+                          title={quality(row.ap.dbm).label}
+                        >
+                          {row.ap.dbm} dBm
+                        </span>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-300">offline</span>
+                      <span className="text-xs text-[var(--fs-text-muted)]">not seen now</span>
                     )}
                   </td>
-                  <td className="px-1 py-1 font-mono text-xs text-slate-700" data-label="BSSID">
+                  <td
+                    className="px-1 py-1 font-mono text-xs text-[var(--fs-text)]"
+                    data-label="Access point ID"
+                  >
                     <div className="flex items-center gap-2">
                       {row.bssid}
                       {isConnected && (
-                        <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-micro font-bold text-indigo-700">
-                          CONNECTED
+                        <span className="rounded bg-[var(--fs-primary-light)] px-1.5 py-0.5 text-micro font-bold text-[var(--fs-primary)]">
+                          you are here
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-1 py-1" data-label="Band">{band && <BandTag band={band} />}</td>
-                  <td className="px-1 py-1 text-slate-600" data-label="SSID">{row.ap?.ssid ?? "—"}</td>
+                  <td className="px-1 py-1" data-label="Band">
+                    {band && <BandTag band={band} />}
+                  </td>
+                  <td className="px-1 py-1 text-[var(--fs-text-secondary)]" data-label="Wi-Fi name">
+                    {row.ap?.ssid ?? "—"}
+                  </td>
                   <td className="px-1 py-1" data-label="Building">
                     <input
                       list="building-suggestions"
                       value={row.entry?.building ?? ""}
                       onChange={(e) => update(row.bssid, { building: e.target.value })}
                       placeholder="e.g. HQ"
-                      className="min-h-11 w-28 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
+                      aria-label={`Building for ${row.bssid}`}
+                      className="min-h-11 w-28 rounded-md border border-[var(--fs-border)] bg-[var(--fs-bg)] px-2 py-2 text-xs text-[var(--fs-text)] focus:border-[var(--fs-primary)]"
                     />
                   </td>
                   <td className="px-1 py-1" data-label="Floor">
@@ -247,23 +271,25 @@ export function RegistryManager({
                       list="floor-suggestions"
                       value={row.entry?.floor ?? ""}
                       onChange={(e) => update(row.bssid, { floor: e.target.value })}
-                      placeholder="e.g. 2nd floor"
-                      className="min-h-11 w-28 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
+                      placeholder="e.g. 3rd floor"
+                      aria-label={`Floor for ${row.bssid}`}
+                      className="min-h-11 w-28 rounded-md border border-[var(--fs-border)] bg-[var(--fs-bg)] px-2 py-2 text-xs text-[var(--fs-text)] focus:border-[var(--fs-primary)]"
                     />
                   </td>
-                  <td className="px-1 py-1" data-label="Location">
+                  <td className="px-1 py-1" data-label="Room / area">
                     <input
                       value={row.entry?.location ?? ""}
                       onChange={(e) => update(row.bssid, { location: e.target.value })}
-                      placeholder="e.g. Hallway, 2nd floor"
-                      className="min-h-11 w-32 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
+                      placeholder="e.g. hallway by lift"
+                      aria-label={`Room or area for ${row.bssid}`}
+                      className="min-h-11 w-32 rounded-md border border-[var(--fs-border)] bg-[var(--fs-bg)] px-2 py-2 text-xs text-[var(--fs-text)] focus:border-[var(--fs-primary)]"
                     />
                   </td>
                   <td className="px-1 py-1 text-right">
                     {row.entry && (
                       <button
                         onClick={() => remove(row.bssid)}
-                        className="inline-flex min-h-11 items-center px-2 text-xs font-medium text-rose-500 hover:text-rose-700"
+                        className="inline-flex min-h-11 items-center px-2 text-xs font-medium text-[var(--fs-danger)] hover:opacity-80"
                       >
                         Clear
                       </button>
@@ -276,36 +302,58 @@ export function RegistryManager({
         </table>
       </Card>
 
-      <div>
-        <div className="flex items-center gap-2">
-          <input
-            aria-label="BSSID"
-            aria-invalid={Boolean(bssidError)}
-            aria-describedby={bssidError ? "manual-bssid-error" : undefined}
-            value={manualBssid}
-            onChange={(e) => {
-              setManualBssid(e.target.value);
-              if (bssidError) setBssidError(null);
-            }}
-            placeholder="Add a BSSID manually (aa:bb:cc:dd:ee:ff)"
-            className={cn(
-              "min-h-11 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400",
-              bssidError && "border-rose-400"
+      <Card padding="sm">
+        <details className="group">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 marker:hidden">
+            <span>
+              <span className="block text-sm font-semibold text-[var(--fs-text)]">
+                Add an access point by ID
+              </span>
+              <span className="mt-0.5 block text-xs text-[var(--fs-text-secondary)]">
+                Advanced — only if an access point never appears in a scan.
+              </span>
+            </span>
+            <ChevronDown
+              className="h-4 w-4 shrink-0 text-[var(--fs-text-muted)] transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
+          <div className="mt-3">
+            <div className="flex items-center gap-2">
+              <input
+                aria-label="Access point ID (BSSID)"
+                aria-invalid={Boolean(bssidError)}
+                aria-describedby={bssidError ? "manual-bssid-error" : undefined}
+                value={manualBssid}
+                onChange={(e) => {
+                  setManualBssid(e.target.value);
+                  if (bssidError) setBssidError(null);
+                }}
+                placeholder="aa:bb:cc:dd:ee:ff"
+                className={cn(
+                  "min-h-11 flex-1 rounded-lg border border-[var(--fs-border)] bg-[var(--fs-bg)] px-3 py-2 text-sm text-[var(--fs-text)] focus:border-[var(--fs-primary)]",
+                  bssidError && "border-[var(--fs-danger)]"
+                )}
+              />
+              <button
+                onClick={addManual}
+                className="min-h-11 rounded-lg bg-[var(--fs-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--fs-primary-hover)]"
+              >
+                Add
+              </button>
+            </div>
+            {bssidError && (
+              <p id="manual-bssid-error" role="alert" className="mt-1 text-xs text-[var(--fs-danger)]">
+                {bssidError}
+              </p>
             )}
-          />
-          <button
-            onClick={addManual}
-            className="min-h-11 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
-          >
-            Add
-          </button>
-        </div>
-        {bssidError && (
-          <p id="manual-bssid-error" role="alert" className="text-xs text-rose-600">
-            {bssidError}
-          </p>
-        )}
-      </div>
+            <p className="mt-2 text-xs leading-relaxed text-[var(--fs-text-muted)]">
+              The ID is printed on the access point label. Everything you enter is saved in this
+              browser only.
+            </p>
+          </div>
+        </details>
+      </Card>
     </div>
   );
 }
@@ -331,10 +379,16 @@ function SortableTh({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className="inline-flex min-h-11 items-center gap-1 whitespace-nowrap hover:text-slate-800"
+        className="inline-flex min-h-11 items-center gap-1 whitespace-nowrap hover:text-[var(--fs-text)]"
       >
         {label}
-        <Icon className={cn("h-3.5 w-3.5", active ? "text-indigo-500" : "text-slate-300")} />
+        <Icon
+          className={cn(
+            "h-3.5 w-3.5",
+            active ? "text-[var(--fs-primary)]" : "text-[var(--fs-text-muted)]"
+          )}
+          aria-hidden="true"
+        />
       </button>
     </th>
   );

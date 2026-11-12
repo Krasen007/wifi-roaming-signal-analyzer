@@ -1,8 +1,20 @@
-import { CircleCheck, MoveRight, Search, TriangleAlert, Zap } from "lucide-react";
+import {
+  ChevronDown,
+  CircleCheck,
+  CircleHelp,
+  MapPin,
+  MoveRight,
+  Signal,
+  TriangleAlert,
+  Wifi,
+  Zap,
+} from "lucide-react";
 import type { AccessPoint, LiveMeta, Registry, RoamEvent } from "../lib/types";
 import { bssidDisplayName, locationLabel } from "../lib/labels";
-import { ROAM_DELTA_THRESHOLD_DBM } from "../lib/signal";
+import { quality, ROAM_DELTA_THRESHOLD_DBM } from "../lib/signal";
+import { SignalBars } from "./SignalBars";
 import { Card } from "./ui/Card";
+import { cn } from "../utils/cn";
 
 export interface RoamPanelProps {
   connected?: AccessPoint;
@@ -16,6 +28,34 @@ export interface RoamPanelProps {
   live: LiveMeta;
   roams: RoamEvent[];
 }
+
+type VerdictTone = "good" | "warn" | "bad" | "neutral";
+
+const VERDICT_STYLES: Record<
+  VerdictTone,
+  { box: string; icon: string; title: string }
+> = {
+  good: {
+    box: "border-[var(--fs-border)] bg-[var(--fs-success-light)]",
+    icon: "text-[var(--fs-success)]",
+    title: "text-[var(--fs-success)]",
+  },
+  warn: {
+    box: "border-[var(--fs-border)] bg-[var(--fs-warning-light)]",
+    icon: "text-[var(--fs-warning)]",
+    title: "text-[var(--fs-warning)]",
+  },
+  bad: {
+    box: "border-[var(--fs-border)] bg-[var(--fs-danger-light)]",
+    icon: "text-[var(--fs-danger)]",
+    title: "text-[var(--fs-danger)]",
+  },
+  neutral: {
+    box: "border-[var(--fs-border)] bg-[var(--fs-bg-secondary)]",
+    icon: "text-[var(--fs-text-secondary)]",
+    title: "text-[var(--fs-text)]",
+  },
+};
 
 export function RoamPanel({
   connected,
@@ -59,136 +99,262 @@ export function RoamPanel({
   );
 
   const userWhere = [currentBuilding.trim(), currentFloor.trim()].filter(Boolean).join(" · ");
+  const focusAp = connected ?? strongest;
+  const focusQuality = focusAp ? quality(focusAp.dbm) : null;
+
+  let tone: VerdictTone = "neutral";
+  let title = "We can't tell which access point you're connected to";
+  let message =
+    "The scanner has not reported your current connection yet. Your Wi-Fi signal is still shown below.";
+  let action =
+    "Open Set up to check that the scanner also runs the interfaces command, or pick the access point manually under Details.";
+  let signalDetail: string | null = null;
+
+  if (wrongBuilding || wrongFloor) {
+    tone = "bad";
+    title = `You look connected to the wrong ${wrongBuilding ? "building" : "floor"}`;
+    message = `You told us you're at ${userWhere}. The access point you're connected to${
+      connectedLoc ? ` is registered at ${connectedLoc}` : ""
+    }. This is the classic “full signal, wrong floor” problem.`;
+    action = "Walk a few steps until the connection changes, or turn Wi-Fi off and on to reconnect.";
+  } else if (stickyWarning) {
+    tone = "warn";
+    title = "A stronger access point is nearby";
+    message = `You're connected to ${connectedLoc ?? "a weaker access point"} with ${
+      focusQuality?.label.toLowerCase() ?? "weaker"
+    } signal, but ${strongestLoc ?? "another access point"} is much stronger.`;
+    signalDetail = `${connected!.dbm} dBm now vs ${strongest!.dbm} dBm nearby`;
+    action = "Turn Wi-Fi off and on to reconnect to the stronger access point.";
+  } else if (connected) {
+    tone = "good";
+    title = "Your connection looks good";
+    message = `You're connected to ${connectedLoc ?? "the strongest access point nearby"}. No stronger access point is visible right now.`;
+    action = "Nothing to do — keep walking and the status will update automatically.";
+  }
+
+  const VerdictIcon =
+    tone === "good" ? CircleCheck : tone === "bad" ? TriangleAlert : tone === "warn" ? Zap : CircleHelp;
+  const styles = VERDICT_STYLES[tone];
 
   // Deliberately excludes dBm values and timestamps: identical strings produce
   // no DOM mutation, so polling cannot re-announce the same verdict.
-  const statusMessage = stickyWarning
-    ? "Sticky client detected. A stronger access point is available."
-    : wrongBuilding || wrongFloor
-      ? `Wrong ${wrongBuilding ? "building" : "floor"} attachment.`
-      : connected
-        ? "Connected to the best access point."
-        : "Connected access point is unknown.";
+  const statusMessage =
+    live.watching && live.stale
+      ? `Scanner offline. Showing the last scan. ${title}. ${message} ${action}`
+      : `${title}. ${message} ${action}`;
 
   return (
-    <Card>
+    <Card className="lg:col-span-2">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">Roaming check</h2>
-        {live.watching && (
-          <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-micro font-bold text-emerald-700">
-            <Zap className="h-3 w-3" /> AUTO
-          </span>
-        )}
+        <h2 className="text-base font-semibold text-[var(--fs-text)]">Connection check</h2>
+        {live.watching &&
+          (live.stale ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--fs-warning-light)] px-2 py-1 text-micro font-bold text-[var(--fs-warning)]">
+              <TriangleAlert className="h-3 w-3" aria-hidden="true" /> OFFLINE
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--fs-success-light)] px-2 py-1 text-micro font-bold text-[var(--fs-success)]">
+              <Zap className="h-3 w-3" aria-hidden="true" /> AUTO
+            </span>
+          ))}
       </div>
 
       <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {statusMessage}
       </p>
 
-      <div className="mt-3 space-y-3 text-sm">
-        {stickyWarning ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">
-            <p className="flex items-center gap-1.5 font-semibold">
-              <TriangleAlert className="h-4 w-4" /> Sticky client detected
-            </p>
-            <p className="mt-1 text-xs leading-relaxed">
-              You're connected to <b>{connectedLoc ?? "a weaker AP"}</b> at {connected!.dbm}{" "}
-              dBm, but the <b>{strongestLoc ?? "nearest"} AP</b> is much stronger (
-              {strongest!.dbm} dBm). Toggle WiFi off/on to force the roam.
-            </p>
-          </div>
-        ) : connected ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-900">
-            <p className="flex items-center gap-1.5 font-semibold">
-              <CircleCheck className="h-4 w-4" /> Connected to the best AP
-            </p>
-            <p className="mt-1 text-xs leading-relaxed">
-              You're on <b>{connectedLoc ?? "the strongest AP"}</b> — no action needed.
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
-            {live.watching
-              ? "Connected AP is unknown — make sure your loop also runs `netsh wlan show interfaces`."
-              : "Add `netsh wlan show interfaces` to the loop (or pick an AP below) to detect the sticky-client case."}
-          </div>
+      <div className={cn("mt-3 rounded-xl border p-4", styles.box)}>
+        <p className={cn("flex items-start gap-2 text-base font-semibold leading-snug", styles.title)}>
+          <VerdictIcon className={cn("mt-0.5 h-5 w-5 shrink-0", styles.icon)} aria-hidden="true" />
+          {title}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--fs-text-secondary)]">{message}</p>
+        {signalDetail && (
+          <p className="mt-1 font-mono text-xs text-[var(--fs-text-secondary)]">{signalDetail}</p>
         )}
-
-        {(wrongBuilding || wrongFloor) && connectedLoc && userWhere && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-rose-900">
-            <p className="flex items-center gap-1.5 font-semibold">
-              <Search className="h-4 w-4" /> Wrong {wrongBuilding ? "building" : "floor"}{" "}
-              attachment
-            </p>
-            <p className="mt-1 text-xs leading-relaxed">
-              You're marked at <b>{userWhere}</b>, but attached to{" "}
-              <b>{connectedLoc}</b> — exactly the "full signal but wrong floor" case.
-            </p>
-          </div>
-        )}
-
-        <div>
-          <label htmlFor="roam-connected-select" className="text-xs font-medium text-slate-500">
-            Connected AP {live.watching && "(auto-detected by the live loop)"}
-          </label>
-          <select
-            id="roam-connected-select"
-            value={connectedBssid}
-            onChange={(e) => setConnectedBssid(e.target.value)}
-            className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs focus:border-indigo-400"
-          >
-            <option value="">— unknown —</option>
-            {myAps.map((a) => (
-              <option key={a.bssid} value={a.bssid}>
-                {bssidDisplayName(registry, a.bssid) + ` · ${a.dbm} dBm`}
-              </option>
-            ))}
-          </select>
-          {connectedBssid && live.watching && (
-            <p className="mt-1 text-xs text-emerald-600">
-              Auto-updates from scan.txt every 5 s.
-            </p>
-          )}
-        </div>
-
-        {/* Connection event log */}
-        <div>
-          <h3 className="text-xs font-medium text-slate-500">Connection events</h3>
-          {roams.length === 0 ? (
-            <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-              {live.watching
-                ? "No connection changes yet — roams and drops will be logged here while you walk around."
-                : "Roams and disconnects will be logged here as the connected AP changes."}
-            </p>
-          ) : (
-            <ul className="mt-1 max-h-36 space-y-1 overflow-y-auto pr-1">
-              {roams.map((r) => (
-                <li
-                  key={r.t}
-                  className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1"
-                >
-                  <span className="font-mono text-micro text-slate-600">
-                    {new Date(r.t).toLocaleTimeString()}
-                  </span>
-                  <span className="inline-flex min-w-0 items-center gap-1 text-xs text-slate-600">
-                    <span className="truncate">{bssidDisplayName(registry, r.from)}</span>
-                    <MoveRight className="h-3 w-3 shrink-0 text-indigo-500" />
-                    {r.to ? (
-                      <span className="truncate font-semibold text-slate-800">
-                        {bssidDisplayName(registry, r.to)}
-                      </span>
-                    ) : (
-                      <span className="truncate font-semibold text-rose-600">
-                        Disconnected
-                      </span>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <p className="mt-2.5 rounded-lg bg-[var(--fs-bg)] px-3 py-2 text-sm leading-relaxed text-[var(--fs-text)]">
+          <b>What to do: </b>
+          {action}
+        </p>
       </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <Stat
+          label="Signal"
+          value={focusQuality ? focusQuality.label : "No reading"}
+          hint={focusAp ? `${focusAp.dbm} dBm · ${focusAp.percent}% of full` : "waiting for a scan"}
+          icon={<Signal className="h-4 w-4" aria-hidden="true" />}
+          bars={focusAp ? focusAp.dbm : undefined}
+          tone={tone === "bad" ? "bad" : tone === "warn" ? "warn" : "good"}
+        />
+        <Stat
+          label="Connected to"
+          value={connected ? bssidDisplayName(registry, connected.bssid) : "Not detected"}
+          hint={connected ? connected.ssid : "see Set up"}
+          icon={<Wifi className="h-4 w-4" aria-hidden="true" />}
+        />
+        <Stat
+          label="Your location"
+          value={userWhere || "Not set"}
+          hint={userWhere ? "used for the floor check" : "add building / floor above"}
+          icon={<MapPin className="h-4 w-4" aria-hidden="true" />}
+        />
+      </div>
+
+      <details className="group mt-3 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-bg-secondary)]">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 text-sm font-medium text-[var(--fs-text)] marker:hidden">
+          Connection details and history
+          <ChevronDown
+            className="h-4 w-4 shrink-0 text-[var(--fs-text-muted)] transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+
+        <div className="space-y-3 border-t border-[var(--fs-border)] px-3 py-3">
+          <div>
+            <label
+              htmlFor="roam-connected-select"
+              className="text-xs font-medium text-[var(--fs-text-secondary)]"
+            >
+              Which access point are you connected to?
+            </label>
+            <select
+              id="roam-connected-select"
+              value={connectedBssid}
+              onChange={(event) => setConnectedBssid(event.target.value)}
+              className="mt-1 min-h-11 w-full rounded-lg border border-[var(--fs-border)] px-2 py-1.5 text-sm text-[var(--fs-text)] focus:border-[var(--fs-primary)]"
+            >
+              <option value="">— not selected / unknown —</option>
+              {myAps.map((ap) => (
+                <option key={ap.bssid} value={ap.bssid}>
+                  {bssidDisplayName(registry, ap.bssid)} · {ap.dbm} dBm
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-[var(--fs-text-muted)]">
+              {live.watching && !live.stale
+                ? "Usually detected automatically while the scanner runs. You can correct it here."
+                : live.watching && live.stale
+                  ? "The scanner is offline. Showing the last detected access point; you can correct it here."
+                  : "Pick the access point manually when you are not running the live scanner."}
+            </p>
+          </div>
+
+          {focusAp && (
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3">
+              <Datum label="Access point ID (BSSID)" value={focusAp.bssid} mono />
+              <Datum
+                label="Signal"
+                value={`${focusAp.dbm} dBm · ${focusAp.percent}%`}
+                mono
+              />
+              <Datum label="Band" value={focusAp.band === "?" ? "unknown" : `${focusAp.band} GHz`} />
+              <Datum label="Channel" value={focusAp.channel != null ? String(focusAp.channel) : "—"} />
+              <Datum label="Radio" value={focusAp.radio ?? "—"} />
+              <Datum label="Network" value={focusAp.ssid} />
+            </dl>
+          )}
+
+          <div>
+            <h3 className="text-xs font-medium text-[var(--fs-text-secondary)]">
+              Recent connection changes
+            </h3>
+            {roams.length === 0 ? (
+              <p className="mt-1 rounded-lg bg-[var(--fs-bg)] px-3 py-2 text-xs text-[var(--fs-text-secondary)]">
+                {live.watching
+                  ? "No changes yet — roams and drops appear here while you walk around."
+                  : "Roams and drops appear here as the connected access point changes."}
+              </p>
+            ) : (
+              <ul className="mt-1 max-h-36 space-y-1 overflow-y-auto pr-1">
+                {roams.map((roam) => (
+                  <li
+                    key={roam.t}
+                    className="flex items-center gap-2 rounded-lg border border-[var(--fs-border)] bg-[var(--fs-bg)] px-2.5 py-1.5"
+                  >
+                    <span className="font-mono text-micro text-[var(--fs-text-muted)]">
+                      {new Date(roam.t).toLocaleTimeString()}
+                    </span>
+                    <span className="inline-flex min-w-0 items-center gap-1 text-xs text-[var(--fs-text-secondary)]">
+                      <span className="truncate">{bssidDisplayName(registry, roam.from)}</span>
+                      <MoveRight className="h-3 w-3 shrink-0 text-[var(--fs-primary)]" aria-hidden="true" />
+                      {roam.to ? (
+                        <span className="truncate font-semibold text-[var(--fs-text)]">
+                          {bssidDisplayName(registry, roam.to)}
+                        </span>
+                      ) : (
+                        <span className="truncate font-semibold text-[var(--fs-danger)]">
+                          Disconnected
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </details>
     </Card>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  hint,
+  icon,
+  bars,
+  tone = "good",
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  icon: React.ReactNode;
+  bars?: number;
+  tone?: "good" | "warn" | "bad";
+}) {
+  return (
+    <div className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-bg)] px-3 py-2.5">
+      <p className="flex items-center gap-1.5 text-micro font-semibold uppercase tracking-wide text-[var(--fs-text-muted)]">
+        {icon}
+        {label}
+      </p>
+      <div className="mt-1 flex items-center gap-2">
+        {bars != null && <SignalBars dbm={bars} />}
+        <p
+          className={cn(
+            "truncate text-sm font-semibold",
+            tone === "bad"
+              ? "text-[var(--fs-danger)]"
+              : tone === "warn"
+                ? "text-[var(--fs-warning)]"
+                : "text-[var(--fs-text)]"
+          )}
+          title={value}
+        >
+          {value}
+        </p>
+      </div>
+      <p className="mt-0.5 truncate text-micro text-[var(--fs-text-muted)]" title={hint}>
+        {hint}
+      </p>
+    </div>
+  );
+}
+
+function Datum({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-micro font-semibold uppercase tracking-wide text-[var(--fs-text-muted)]">
+        {label}
+      </dt>
+      <dd
+        className={cn("truncate text-[var(--fs-text-secondary)]", mono && "font-mono text-xs")}
+        title={value}
+      >
+        {value}
+      </dd>
+    </div>
   );
 }

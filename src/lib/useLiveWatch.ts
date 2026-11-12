@@ -3,6 +3,7 @@ import {
   autoLiveSource,
   fsaSupported,
   httpScanHandle,
+  LIVE_STALE_MS,
   LiveSourceError,
   pickScanFile,
   type WatchHandle,
@@ -15,6 +16,8 @@ export interface LiveWatch {
   /** True when `?live=` points at the portable loopback scanner bridge. */
   bridge: boolean;
   watching: boolean;
+  /** True when no newer scan has arrived for `LIVE_STALE_MS`. Polling continues so it can recover. */
+  stale: boolean;
   fileName: string | null;
   lastUpdate: number | null;
   error: string | null;
@@ -35,12 +38,15 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
   const bridge = autoSource?.bridge ?? false;
   const supported = autoSource !== null || fsaSupported();
   const [watching, setWatching] = useState(false);
+  const [stale, setStale] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleRef = useRef<WatchHandle | null>(null);
   const lastKeyRef = useRef<string | null>(null);
+  const lastUpdateRef = useRef<number | null>(null);
+  const attachedAtRef = useRef<number | null>(null);
   const onTextRef = useRef(onText);
   useEffect(() => {
     onTextRef.current = onText;
@@ -49,8 +55,12 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
   const attach = useCallback((handle: WatchHandle) => {
     handleRef.current = handle;
     lastKeyRef.current = null;
+    lastUpdateRef.current = null;
+    attachedAtRef.current = Date.now();
     setFileName(handle.name);
+    setLastUpdate(null);
     setError(null);
+    setStale(false);
     setWatching(true);
   }, []);
 
@@ -81,12 +91,21 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
 
   const stop = useCallback(() => {
     setWatching(false);
+    setStale(false);
     handleRef.current = null;
+    lastUpdateRef.current = null;
+    attachedAtRef.current = null;
   }, []);
 
   useEffect(() => {
     if (!watching) return;
     let cancelled = false;
+
+    const markStale = () => {
+      if (cancelled) return;
+      const anchor = lastUpdateRef.current ?? attachedAtRef.current;
+      if (anchor !== null) setStale(Date.now() - anchor > LIVE_STALE_MS);
+    };
 
     const tick = async () => {
       const h = handleRef.current;
@@ -97,14 +116,20 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
         if (key !== lastKeyRef.current) {
           lastKeyRef.current = key;
           const text = await f.text();
+          const stamp = f.lastModified > 0 ? f.lastModified : Date.now();
           if (!cancelled) {
-            setLastUpdate(Date.now());
+            lastUpdateRef.current = stamp;
+            setLastUpdate(stamp);
+            setStale(Date.now() - stamp > LIVE_STALE_MS);
             if (text) setError(null);
             onTextRef.current(text);
           }
+        } else {
+          markStale();
         }
       } catch (err) {
         if (!cancelled) {
+          markStale();
           setError(
             err instanceof LiveSourceError
               ? err.message
@@ -114,7 +139,10 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
           // stops cleanly so the user can retry with the Connect button.
           if (bridge) {
             setWatching(false);
+            setStale(false);
             handleRef.current = null;
+            lastUpdateRef.current = null;
+            attachedAtRef.current = null;
           }
         }
       }
@@ -133,6 +161,7 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
     auto: autoSource !== null,
     bridge,
     watching,
+    stale,
     fileName,
     lastUpdate,
     error,

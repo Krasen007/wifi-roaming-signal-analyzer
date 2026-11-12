@@ -20,6 +20,9 @@ export function fsaSupported(): boolean {
 /** Thrown when a non-picker source (the dev server or a local bridge) can't hand over the scan. */
 export class LiveSourceError extends Error {}
 
+/** Three typical 5 s scan cycles. A source older than this is shown as offline. */
+export const LIVE_STALE_MS = 15_000;
+
 export interface HttpSource {
   /** URL to poll, either same-origin (`/scan.txt`) or a loopback bridge. */
   url: string;

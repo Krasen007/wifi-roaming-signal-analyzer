@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import type { Band, History, Registry, RoamEvent, SamplePoint } from "../lib/types";
 import { bssidDisplayName } from "../lib/labels";
+import { quality } from "../lib/signal";
 import { BandTag } from "./BandTag";
 import { Card } from "./ui/Card";
 import { cn } from "../utils/cn";
@@ -58,6 +60,10 @@ export function LiveHistoryChart({
   bandOf,
   connectionEvents,
   onClear,
+  activeSsid,
+  ssids,
+  chartAllWifi,
+  onSelectChartScope,
 }: {
   history: History;
   match: (bssid: string) => boolean;
@@ -66,6 +72,10 @@ export function LiveHistoryChart({
   bandOf: (bssid: string) => Band;
   connectionEvents: RoamEvent[];
   onClear?: () => void;
+  activeSsid: string;
+  ssids: string[];
+  chartAllWifi: boolean;
+  onSelectChartScope: (all: boolean) => void;
 }) {
   const [focus, setFocus] = useState<string | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
@@ -109,7 +119,7 @@ export function LiveHistoryChart({
 
   const W = size.w;
   const H = size.h;
-  const PAD_L = W < 480 ? 34 : 38;
+  const PAD_L = W < 480 ? 42 : 46;
   const PAD_R = 14;
   const PAD_T = 10;
   const PAD_B = 22;
@@ -126,48 +136,94 @@ export function LiveHistoryChart({
   const path = (pts: RealPoint[]) =>
     pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.t).toFixed(1)},${y(p.dbm).toFixed(1)}`).join(" ");
 
-  const ticks = [Y_MAX, -65, Y_MIN];
+  const ticks = [
+    { dbm: Y_MAX, label: "Strong" },
+    { dbm: -65, label: "Okay" },
+    { dbm: Y_MIN, label: "Weak" },
+  ];
   const spanMin = Math.round(span / 60000) || 1;
   const toggle = (bssid: string) => setFocus((f) => (f === bssid ? null : bssid));
 
   return (
     <Card padding="lg">
-      <div className="flex items-baseline justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-[var(--fs-text)]">Live signal history</h2>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-[var(--fs-text)]">Signal over time</h2>
           <p className="mt-1 text-sm text-[var(--fs-text-secondary)]">
-            Signal per AP over the last ~{spanMin} min. Dotted parts = AP out of range. Vertical
-            lines mark a connection drop (red) or a roam to another AP (amber). Click a line or
-            legend chip to isolate it.
+            The last {spanMin} minutes. Higher lines mean a stronger connection.
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="chart-scope" className="sr-only">
+            Choose what the chart shows
+          </label>
+          <select
+            id="chart-scope"
+            value={chartAllWifi ? "all" : "active"}
+            onChange={(event) => onSelectChartScope(event.target.value === "all")}
+            className="min-h-11 max-w-[13rem] rounded-lg border border-[var(--fs-border)] bg-[var(--fs-bg)] px-2 text-xs text-[var(--fs-text)] focus:border-[var(--fs-primary)]"
+          >
+            <option value="active">Only “{activeSsid}”</option>
+            <option value="all" disabled={ssids.length < 2}>
+              All Wi-Fi networks
+            </option>
+          </select>
           {focus && (
             <button
               onClick={() => setFocus(null)}
-              className="inline-flex min-h-11 items-center rounded-lg border border-indigo-200 px-3 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
+              className="inline-flex min-h-11 items-center rounded-lg border border-[var(--fs-primary)] px-3 text-xs font-medium text-[var(--fs-primary)] hover:bg-[var(--fs-primary-light)]"
             >
-              Show all
+              Show all lines
             </button>
           )}
           {onClear && (
             <button
               onClick={onClear}
-              className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 px-3 text-xs font-medium text-slate-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+              className="inline-flex min-h-11 items-center rounded-lg border border-[var(--fs-border)] px-3 text-xs font-medium text-[var(--fs-text-secondary)] hover:border-[var(--fs-danger)] hover:bg-[var(--fs-danger-light)] hover:text-[var(--fs-danger)]"
             >
-              Clear chart
+              Clear history
             </button>
           )}
         </div>
       </div>
 
+      <details className="group mt-2">
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-[var(--fs-text-secondary)] marker:hidden">
+          How to read this chart
+          <ChevronDown
+            className="h-3.5 w-3.5 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+        <p className="mt-1 max-w-2xl rounded-lg bg-[var(--fs-bg-secondary)] px-3 py-2 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+          Each line is one access point. A dotted gap means it went out of range, a red vertical
+          line is a disconnect, and an amber line is a roam to another access point. Select a line
+          or a name below to highlight just that access point.
+        </p>
+      </details>
+
       <div ref={chartRef}>
         <svg viewBox={`0 0 ${W} ${H}`} className="mt-4 block w-full" style={{ height: H }}>
-          {ticks.map((t) => (
-            <g key={t}>
-              <line x1={PAD_L} x2={W - PAD_R} y1={y(t)} y2={y(t)} stroke="var(--fs-border)" strokeWidth={1} />
-              <text x={PAD_L - 6} y={y(t) + 3} textAnchor="end" fontSize={12} fill="var(--fs-text-muted)">
-                {t}
+          {ticks.map(({ dbm, label }) => (
+            <g key={label}>
+              <line
+                x1={PAD_L}
+                x2={W - PAD_R}
+                y1={y(dbm)}
+                y2={y(dbm)}
+                stroke="var(--fs-border)"
+                strokeWidth={1}
+              />
+              <text
+                x={PAD_L - 6}
+                y={y(dbm) - 1}
+                textAnchor="end"
+                fontSize={11}
+                fill="var(--fs-text-muted)"
+              >
+                <title>{dbm} dBm</title>
+                <tspan x={PAD_L - 6} dy="0">{label}</tspan>
+                <tspan x={PAD_L - 6} dy="12" fontSize={11}>{dbm}</tspan>
               </text>
             </g>
           ))}
@@ -320,7 +376,7 @@ export function LiveHistoryChart({
       <div className="mt-3 flex flex-wrap gap-2">
         {series.length === 0 && (
           <p className="text-xs text-[var(--fs-text-secondary)]">
-            No signal history yet — new scans will draw the lines again.
+            No signal history yet. It will appear as soon as the scanner sends a few updates.
           </p>
         )}
         {series.map((s) => {
@@ -335,32 +391,35 @@ export function LiveHistoryChart({
               className={cn(
                 "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs transition",
                 isFocused
-                  ? "border-indigo-400 bg-indigo-50 text-indigo-800 ring-1 ring-indigo-200"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50",
+                  ? "border-[var(--fs-primary)] bg-[var(--fs-primary-light)] text-[var(--fs-primary)]"
+                  : "border-[var(--fs-border)] text-[var(--fs-text-secondary)] hover:border-[var(--fs-border-hover)] hover:bg-[var(--fs-bg-secondary)]",
                 focus != null && !isFocused && "opacity-50"
               )}
-              title="Click to isolate this AP in the chart"
+              title="Select to highlight this access point in the chart"
             >
-              <span className="sr-only">Isolate </span>
+              <span className="sr-only">Highlight </span>
               <span
                 className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: s.inRange ? c : "#cbd5e1" }}
+                style={{ backgroundColor: s.inRange ? c : "#94a3b8" }}
               />
               {seriesName}
               <BandTag band={bandOf(s.bssid)} />
-              {s.lastReal ? (
-                <span className="font-mono text-micro text-slate-600">
-                  {s.lastReal.dbm}dBm
+              {s.lastReal && s.lastReal.dbm != null ? (
+                <span
+                  className="font-mono font-semibold text-[var(--fs-text-secondary)]"
+                  title={quality(s.lastReal.dbm).label}
+                >
+                  {s.lastReal.dbm} dBm
                 </span>
               ) : null}
               {!s.inRange && (
-                <span className="rounded bg-slate-100 px-1 py-0.5 text-micro font-semibold text-slate-500">
-                  out of range
+                <span className="rounded bg-[var(--fs-bg-tertiary)] px-1 py-0.5 text-micro font-semibold text-[var(--fs-text-secondary)]">
+                  not seen
                 </span>
               )}
               {s.bssid === connectedBssid && (
-                <span className="rounded bg-indigo-100 px-1 py-0.5 text-micro font-bold text-indigo-700">
-                  HERE
+                <span className="rounded bg-[var(--fs-primary-light)] px-1 py-0.5 text-micro font-bold text-[var(--fs-primary)]">
+                  connected
                 </span>
               )}
             </button>

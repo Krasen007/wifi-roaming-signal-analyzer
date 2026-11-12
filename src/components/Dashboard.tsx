@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Radar } from "lucide-react";
+import { ArrowRight, FileText, Radar, Route, Wifi } from "lucide-react";
 import type { AccessPoint, Band, History, LiveMeta, Registry, RoamEvent } from "../lib/types";
 import { groupDevices } from "../lib/devices";
 import { registryValueSets } from "../lib/labels";
@@ -27,6 +27,7 @@ export function Dashboard({
   lastSeenBand,
   roams,
   onClearHistory,
+  onOpenSetup,
 }: {
   aps: AccessPoint[];
   registry: Registry;
@@ -42,6 +43,7 @@ export function Dashboard({
   lastSeenBand: Record<string, Band>;
   roams: RoamEvent[];
   onClearHistory: () => void;
+  onOpenSetup: () => void;
 }) {
   const ssids = useMemo(() => Array.from(new Set(aps.map((a) => a.ssid))).sort(), [aps]);
   const defaultSsid = aps[0]?.ssid ?? "";
@@ -78,12 +80,52 @@ export function Dashboard({
 
   if (aps.length === 0) {
     return (
-      <Card tone="dashed" className="p-10 text-center">
-        <Radar className="mx-auto h-10 w-10 text-slate-300" />
-        <h3 className="mt-3 text-base font-semibold text-slate-800">No scan data yet</h3>
-        <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
-          Open <b>Live setup</b>, start the PowerShell loop, then pick your scan.txt — the
-          dashboard updates as you walk between floors.
+      <Card tone="accent" padding="lg" className="mx-auto max-w-3xl text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--fs-primary)] text-white shadow-sm">
+          <Radar className="h-7 w-7" aria-hidden="true" />
+        </div>
+        <h2 className="mt-4 text-xl font-bold text-[var(--fs-text)]">
+          Let's find out where you're connected
+        </h2>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-[var(--fs-text-secondary)]">
+          FloorScope needs a small scanner running on this PC. It reads the Wi-Fi list Windows
+          already shows — nothing is uploaded or sent anywhere.
+        </p>
+
+        <ol className="mx-auto mt-6 grid max-w-2xl gap-3 text-left sm:grid-cols-3">
+          <OnboardingStep
+            number={1}
+            icon={FileText}
+            title="Start the scanner"
+            text="Open Set up and run the Wi-Fi scanner."
+          />
+          <OnboardingStep
+            number={2}
+            icon={Route}
+            title="Walk around"
+            text="Keep the scanner window open while you move."
+          />
+          <OnboardingStep
+            number={3}
+            icon={Wifi}
+            title="Come back here"
+            text="Your live connection status appears automatically."
+          />
+        </ol>
+
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={onOpenSetup}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--fs-primary)] px-5 text-sm font-semibold text-white transition-colors hover:bg-[var(--fs-primary-hover)]"
+          >
+            Set up the scanner
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+        <p className="mx-auto mt-3 max-w-md text-xs leading-relaxed text-[var(--fs-text-muted)]">
+          Already started a scanner? Make sure it is writing <b>scan.txt</b>, then reload this page
+          from the launcher so the dashboard can read it.
         </p>
       </Card>
     );
@@ -95,8 +137,6 @@ export function Dashboard({
         activeSsid={activeSsid}
         ssids={ssids}
         onSelectSsid={setSsid}
-        chartAllWifi={chartAllWifi}
-        onSelectChartScope={setChartAllWifi}
         currentBuilding={currentBuilding}
         onChangeBuilding={setCurrentBuilding}
         buildings={buildings}
@@ -106,15 +146,9 @@ export function Dashboard({
         live={live}
       />
 
-      {/* Hero + verdict */}
+      {/* Verdict first: the plain-language answer, then the strongest-AP card. */}
       {heroAp && (
         <div className="grid gap-5 lg:grid-cols-3">
-          <SignalHero
-            strongest={heroAp}
-            activeSsid={activeSsid}
-            registry={registry}
-            isConnected={Boolean(connectedOnActive)}
-          />
           <RoamPanel
             connected={connected}
             strongest={strongest}
@@ -127,6 +161,12 @@ export function Dashboard({
             live={live}
             roams={roams}
           />
+          <SignalHero
+            strongest={heroAp}
+            activeSsid={activeSsid}
+            registry={registry}
+            isConnected={Boolean(connectedOnActive)}
+          />
         </div>
       )}
 
@@ -138,6 +178,10 @@ export function Dashboard({
         bandOf={bandOf}
         connectionEvents={roams}
         onClear={onClearHistory}
+        activeSsid={activeSsid}
+        ssids={ssids}
+        chartAllWifi={chartAllWifi}
+        onSelectChartScope={setChartAllWifi}
       />
 
       <DevicesPanel
@@ -157,5 +201,30 @@ export function Dashboard({
       />
       <OtherNetworks aps={aps} activeSsid={activeSsid} />
     </div>
+  );
+}
+
+function OnboardingStep({
+  number,
+  icon: Icon,
+  title,
+  text,
+}: {
+  number: number;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  text: string;
+}) {
+  return (
+    <li className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-bg)] p-3">
+      <div className="flex items-center gap-2">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--fs-primary-light)] text-xs font-bold text-[var(--fs-primary)]">
+          {number}
+        </span>
+        <Icon className="h-4 w-4 text-[var(--fs-primary)]" aria-hidden="true" />
+        <span className="text-sm font-semibold text-[var(--fs-text)]">{title}</span>
+      </div>
+      <p className="mt-1.5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">{text}</p>
+    </li>
   );
 }

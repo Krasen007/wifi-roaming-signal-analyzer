@@ -224,18 +224,18 @@ export function WiredPanel({
             <Cable className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Wired LAN discovery</h2>
-            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-              Plug into a wall socket and FloorScope shows the adapter, gateway, LAN neighbours and
-              — when the switch announces itself over <b>LLDP</b> — the exact switch and port. Save
-              each socket to build a port map of the building and compare it with your Wi-Fi APs.
+            <h2 className="text-sm font-semibold text-[var(--fs-text)]">Wired connection check</h2>
+            <p className="mt-0.5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+              Plug an Ethernet cable into a wall socket to see which switch and port you are using.
+              This is optional and more technical than the Wi-Fi check. Save each socket to build a
+              map of the building and compare it with your Wi-Fi access points.
             </p>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Stat
-            label="Mode"
+            label="Scanner mode"
             value={watch.bridge ? "Portable bridge" : watch.auto ? "Automatic" : "Manual"}
             hint={
               watch.bridge
@@ -248,18 +248,18 @@ export function WiredPanel({
             }
           />
           <Stat
-            label="Live updates"
+            label="Live readings"
             value={watch.watching ? "On" : "Off"}
             hint={watch.watching ? "reading wired.txt" : "not reading"}
             tone={watch.watching ? "good" : "muted"}
           />
           <Stat
-            label="LAN neighbours"
+            label="Devices on this network"
             value={String(info?.neighbors.length ?? 0)}
-            hint="devices in the ARP table"
+            hint="seen in the ARP table"
           />
           <Stat
-            label="Last update"
+            label="Last reading"
             value={watch.lastUpdate ? new Date(watch.lastUpdate).toLocaleTimeString() : "—"}
             hint={watch.lastUpdate ? "new snapshot received" : "waiting for data"}
           />
@@ -344,7 +344,7 @@ export function WiredPanel({
             <Card>
               <div className="flex items-center gap-2">
                 <Network className="h-4 w-4 text-slate-500" />
-                <h2 className="text-sm font-semibold text-slate-900">Wired adapter</h2>
+                <h2 className="text-sm font-semibold text-[var(--fs-text)]">Ethernet adapter</h2>
               </div>
               {info.adapters.length === 0 ? (
                 <p className="mt-3 text-xs text-slate-500">
@@ -391,7 +391,7 @@ export function WiredPanel({
             <Card>
               <div className="flex items-center gap-2">
                 <Router className="h-4 w-4 text-slate-500" />
-                <h2 className="text-sm font-semibold text-slate-900">Gateway / first hop</h2>
+                <h2 className="text-sm font-semibold text-[var(--fs-text)]">Gateway</h2>
               </div>
               <dl className="mt-3 space-y-2 text-xs">
                 <Datum label="Gateway IP" value={gatewayIp || "—"} mono />
@@ -410,7 +410,7 @@ export function WiredPanel({
           <Card tone={info.lldp ? "success" : "warning"}>
             <div className="flex items-center gap-2">
               <Server className={cn("h-4 w-4", info.lldp ? "text-emerald-600" : "text-amber-600")} />
-              <h2 className="text-sm font-semibold text-slate-900">Switch identity</h2>
+              <h2 className="text-sm font-semibold text-[var(--fs-text)]">Network switch</h2>
               {info.lldp && (
                 <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-micro font-bold text-white">
                   {info.lldp.source}
@@ -458,7 +458,7 @@ export function WiredPanel({
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
               <div className="flex items-center gap-2">
                 <Network className="h-4 w-4 text-slate-500" />
-                <h2 className="text-sm font-semibold text-slate-900">LAN neighbours</h2>
+                <h2 className="text-sm font-semibold text-[var(--fs-text)]">Devices on this network</h2>
               </div>
               <span className="text-xs text-slate-600">{info.neighbors.length} devices</span>
             </div>
@@ -608,7 +608,7 @@ export function WiredPanel({
       {/* Registry */}
       <Card padding="none" className="overflow-x-auto responsive-table">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-          <h2 className="text-sm font-semibold text-slate-900">Wired port map</h2>
+            <h2 className="text-sm font-semibold text-[var(--fs-text)]">Saved wall sockets</h2>
           <span className="text-xs text-slate-600">{rows.length} sockets</span>
         </div>
         <table className="w-full text-sm">
@@ -740,7 +740,7 @@ export function WiredPanel({
       >
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-slate-500" />
-          <h2 className="text-sm font-semibold text-slate-900">Paste / drop a wired snapshot</h2>
+            <h2 className="text-sm font-semibold text-[var(--fs-text)]">Paste a wired snapshot</h2>
         </div>
         <p className="mt-0.5 text-xs text-slate-500">
           Drop <b>wired.txt</b>, or paste <code>ipconfig /all</code> and <code>arp -a</code>{" "}

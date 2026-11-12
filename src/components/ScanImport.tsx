@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 import {
   Activity,
+  Check,
+  ChevronDown,
   CircleAlert,
   Copy,
-  Check,
   Download,
   FileText,
+  Link2,
   Play,
   Square,
   Upload,
-  Info,
-  Link2,
+  Wifi,
 } from "lucide-react";
 import { parseScan, type ConnectedInfo } from "../lib/parsers";
 import type { AccessPoint } from "../lib/types";
 import { cn } from "../utils/cn";
 import type { LiveWatch } from "../lib/useLiveWatch";
-import { queryLoopbackPermission, type LoopbackPermission } from "../lib/live";
+import { LIVE_STALE_MS, queryLoopbackPermission, type LoopbackPermission } from "../lib/live";
 import { downloadBridgeBat } from "../lib/bridgeBat";
 import { Card } from "./ui/Card";
 import { HowItWorks } from "./ui/HowItWorks";
@@ -28,10 +29,12 @@ export function ScanImport({
   onParsed,
   live,
   aps,
+  onGoToDashboard,
 }: {
   onParsed: (aps: AccessPoint[], format: string, connected?: ConnectedInfo) => void;
   live: LiveWatch;
   aps: AccessPoint[];
+  onGoToDashboard: () => void;
 }) {
   const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
@@ -43,6 +46,10 @@ export function ScanImport({
     void queryLoopbackPermission().then(setPermission);
   }, [live.bridge, live.watching]);
 
+  const scannerLive = live.watching && !live.stale;
+  const scannerOffline = live.watching && live.stale;
+  const staleSeconds = Math.round(LIVE_STALE_MS / 1000);
+
   const copyLoop = () => {
     navigator.clipboard?.writeText(LOOP_CMD);
     setCopied(true);
@@ -53,6 +60,7 @@ export function ScanImport({
     const res = parseScan(text);
     if (res.aps.length === 0 && !res.connected) return;
     onParsed(res.aps, res.format, res.connected);
+    onGoToDashboard();
   };
 
   const dropFile = async (file: File) => {
@@ -67,208 +75,130 @@ export function ScanImport({
     const res = parseScan(t);
     if (res.aps.length === 0 && !res.connected) return;
     onParsed(res.aps, res.format, res.connected);
+    onGoToDashboard();
   };
 
   return (
-    <div className="space-y-6">
-      {/* OVERVIEW — live status tiles; the explainer lives in HowItWorks below */}
+    <div className="space-y-5">
       <Card>
         <div className="flex items-start gap-2.5">
-          <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
-            <Info className="h-4 w-4" />
+          <div className="rounded-lg bg-[var(--fs-primary-light)] p-2 text-[var(--fs-primary)]">
+            <Wifi className="h-4 w-4" aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">What this tab is for</h2>
+            <h2 className="text-sm font-semibold text-[var(--fs-text)]">
+              Get live Wi-Fi readings
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+              FloorScope reads a small text file that Windows refreshes every few seconds. Set it
+              up once, then walk around and watch the Overview tab.
+            </p>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 divide-x divide-y divide-slate-200 sm:grid-cols-4 sm:divide-y-0">
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <StatusItem
-            label="Mode"
-            value={live.bridge ? "Portable bridge" : live.auto ? "Automatic" : "Manual"}
+            label="Scanner"
+            value={scannerLive ? "Running" : scannerOffline ? "Offline" : "Not running"}
             hint={
-              live.bridge
-                ? live.watching
-                  ? "connected to local scanner"
-                  : "click Connect below"
-                : live.auto
-                  ? "started by start-wifi.bat"
-                  : "you pick the file"
+              scannerLive
+                ? "readings are flowing in"
+                : scannerOffline
+                  ? `no new scan for ${staleSeconds} seconds`
+                  : "follow the steps below"
+            }
+            tone={scannerLive ? "good" : scannerOffline ? "warning" : "muted"}
+          />
+          <StatusItem
+            label="Last reading"
+            value={live.lastUpdate ? new Date(live.lastUpdate).toLocaleTimeString() : "Waiting"}
+            hint={
+              live.lastUpdate
+                ? scannerOffline
+                  ? "last scan received"
+                  : "new scan received"
+                : "nothing received yet"
             }
           />
           <StatusItem
-            label="Live updates"
-            value={live.watching ? "On" : "Off"}
-            hint={live.watching ? "reading scan.txt" : "not reading"}
-            tone={live.watching ? "good" : "muted"}
-          />
-          <StatusItem
-            label="APs in last scan"
+            label="Access points seen"
             value={String(aps.length)}
-            hint="unique BSSIDs"
-          />
-          <StatusItem
-            label="Last update"
-            value={live.lastUpdate ? new Date(live.lastUpdate).toLocaleTimeString() : "—"}
-            hint={live.lastUpdate ? "new scan received" : "waiting for a scan"}
+            hint="distinct Wi-Fi access points"
           />
         </div>
 
-        {(live.auto || live.bridge) && live.watching && (
-          <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-            <Check className="h-3.5 w-3.5" /> All set —{" "}
-            {live.bridge ? "the local scanner bridge is" : "start-wifi.bat is"} feeding scans to the
-            dashboard. You can go back to Dashboard.
-          </p>
-        )}
-      </Card>
-
-      {/* PORTABLE — hosted static site */}
-      <Card tone="success">
-        <div className="flex items-center gap-2.5">
-          <div className="rounded-lg bg-emerald-600 p-2 text-white">
-            <Download className="h-4 w-4" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">
-              Portable mode — run the scanner locally
-            </h2>
-            <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
-              Use a separate scanner when FloorScope is opened from a hosted site (for example
-              GitHub Pages). Each helper runs only its Wi-Fi or wired scan, serves that output on
-              <b> 127.0.0.1</b> behind its own random token, and opens the matching app view.
-              Nothing is uploaded.
+        {scannerLive ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--fs-success-light)] px-3 py-2.5">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--fs-success)]">
+              <Check className="h-3.5 w-3.5" aria-hidden="true" />
+              All set — readings are coming in. You can go back to the Overview.
             </p>
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => downloadBridgeBat("wifi")}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
-          >
-            <Download className="h-4 w-4" />
-            Download Wi-Fi scanner (.bat)
-          </button>
-          {live.bridge && live.supported && (
             <button
-              onClick={live.watching ? live.stop : live.start}
-              className={cn(
-                    "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
-                live.watching ? "bg-rose-600 hover:bg-rose-500" : "bg-indigo-600 hover:bg-indigo-500"
-              )}
+              type="button"
+              onClick={onGoToDashboard}
+              className="inline-flex min-h-11 items-center rounded-lg bg-[var(--fs-primary)] px-3 text-xs font-semibold text-white hover:bg-[var(--fs-primary-hover)]"
             >
-              {live.watching ? <Square className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-              {live.watching ? "Stop watching" : "Connect local scanner"}
+              Go to Overview
             </button>
-          )}
-          {live.bridge && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-              <Link2 className="h-3.5 w-3.5" /> Bridge URL detected
-            </span>
-          )}
-        </div>
-
-        <ol className="mt-3 list-decimal space-y-1 pl-5 text-xs leading-relaxed text-slate-500">
-          <li>
-            Download and run the scanner for the mode you want. Wi-Fi and wired scanners can run
-            independently.
-          </li>
-          <li>
-            Double-click <b>floorscope-wifi-scanner.bat</b> or <b>floorscope-wired-scanner.bat</b>.
-            If Windows SmartScreen appears, choose{" "}
-            <b>More info → Run anyway</b>.
-          </li>
-          <li>Keep the scanner window open — it opens this page already pointed at the bridge.</li>
-          <li>
-            Click <b>Connect local scanner</b> for Wi-Fi or <b>Connect wired scanner</b> in the
-            Wired tab, then allow <b>local network access</b> when the browser asks. Chrome/Edge
-            only; Safari blocks loopback requests.
-          </li>
-        </ol>
-
-        {live.bridge && permission === "denied" && (
-          <div className="mt-3 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-rose-800">
-            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-            <p className="text-xs leading-relaxed">
-              Local network access is blocked for this site. Open the browser&apos;s site settings
-              and allow <b>Local network</b> / <b>Loopback network</b> access, then click Connect
-              again.
+          </div>
+        ) : scannerOffline ? (
+          <div className="mt-3 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-warning-light)] px-3 py-2.5 text-[var(--fs-warning)]">
+            <p className="flex items-center gap-1.5 text-xs font-medium">
+              <CircleAlert className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              Readings stopped arriving. The scanner window may have closed, or scan.txt stopped
+              updating.
+            </p>
+            <p className="mt-1 text-xs leading-relaxed">
+              The last scan is still on Overview. Live readings resume automatically when a new
+              scan appears.
             </p>
           </div>
-        )}
-
-        {live.bridge && permission === "prompt" && (!live.watching || live.error) && (
-          <p className="mt-3 text-xs text-emerald-700">
-            The browser will ask for local network access when you click{" "}
-            <b>Connect local scanner</b>.
+        ) : (
+          <p className="mt-3 rounded-xl bg-[var(--fs-bg-secondary)] px-3 py-2.5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+            Nothing is coming in yet. Follow step 1, then step 2. If live reading is not available
+            in this browser, use the paste option in step 3.
           </p>
         )}
       </Card>
 
-      {/* STEP 1+2 — start the loop */}
       <Card>
-        <div className="flex items-center gap-2.5">
-          <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600">
-            <Play className="h-4 w-4" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">
-              1 · Start the scan loop (local project)
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Run this in PowerShell on your laptop. It overwrites <b>scan.txt</b> (in the folder
-              where you started PowerShell) every 5 seconds, including which AP you&apos;re connected
-              to.
-              On a hosted site, use the portable scanner above instead.
-            </p>
-          </div>
-        </div>
+        <StepHeading
+          number={1}
+          icon={Play}
+          title="Start the scanner"
+          text="Open PowerShell in the FloorScope folder on this PC and paste the command below. Leave the window open while you walk."
+        />
         <div className="mt-3 flex items-center gap-2">
           <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded-lg bg-slate-900 p-3 text-xs text-emerald-300">
             {LOOP_CMD}
           </code>
           <button
             onClick={copyLoop}
-              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white hover:bg-slate-700"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white hover:bg-slate-700"
           >
-            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
-        <p className="mt-2 text-xs text-slate-600">
-          Leave the PowerShell window open while you walk; stop it with Ctrl+C when done.
+        <p className="mt-2 text-xs text-[var(--fs-text-secondary)]">
+          This updates <b>scan.txt</b> every 5 seconds with the nearby access points and the one you
+          are connected to. Stop it with Ctrl+C when you are done.
         </p>
       </Card>
 
-      {/* STEP 3 — watch the file live */}
       <Card tone="accent">
-        <div className="flex items-center gap-2.5">
-          <div className="rounded-lg bg-indigo-600 p-2 text-white">
-            <Activity className="h-4 w-4" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">2 · Watch the file — live mode</h2>
-            <p className="mt-0.5 text-xs text-slate-600">
-              {live.bridge ? (
-                <>
-                  This page is pointed at the <b>local scanner bridge</b>. Use the button in the{" "}
-                  <b>Portable mode</b> section above to read <b>scan.txt</b> from <b>127.0.0.1</b>.
-                </>
-              ) : live.auto ? (
-                <>
-                  Started by <b>start-wifi.bat</b> — FloorScope reads <b>scan.txt</b> straight from the
-                  dev server and updates the dashboard the moment the loop writes a new scan.
-                </>
-              ) : (
-                <>
-                  Pick the <b>scan.txt</b> the loop is writing. FloorScope re-reads it the moment it
-                  changes and updates the dashboard automatically.
-                </>
-              )}
-            </p>
-          </div>
-        </div>
+        <StepHeading
+          number={2}
+          icon={Activity}
+          title="Turn on live reading"
+          text={
+            live.bridge
+              ? "This page was opened by the portable scanner. Click Connect below and allow local network access when the browser asks."
+              : live.auto
+                ? "The scanner was started by start-wifi.bat. FloorScope re-reads scan.txt automatically and updates Overview as soon as it changes."
+                : "Pick the scan.txt file the command is writing. FloorScope re-reads it whenever it changes and updates Overview automatically."
+          }
+        />
 
         {live.supported ? (
           (!live.bridge || live.watching) && (
@@ -277,62 +207,77 @@ export function ScanImport({
                 <button
                   onClick={live.watching ? live.stop : live.start}
                   className={cn(
-                "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
+                    "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
                     live.watching
-                      ? "bg-rose-600 hover:bg-rose-500"
-                      : "bg-indigo-600 hover:bg-indigo-500"
+                      ? "bg-[var(--fs-danger)] hover:opacity-90"
+                      : "bg-[var(--fs-primary)] hover:bg-[var(--fs-primary-hover)]"
                   )}
                 >
                   {live.watching ? (
-                    <Square className="h-4 w-4" />
+                    <Square className="h-4 w-4" aria-hidden="true" />
                   ) : (
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-4 w-4" aria-hidden="true" />
                   )}
                   {live.watching
-                    ? "Stop watching"
+                    ? "Stop live reading"
                     : live.auto
-                      ? "Restart live watch"
-                      : "Pick scan.txt & go live"}
+                      ? "Restart live reading"
+                      : "Pick scan.txt and go live"}
                 </button>
               )}
 
-              {live.watching && (
-                <div className="flex items-center gap-2 text-sm text-slate-600">
+              {scannerLive && (
+                <div className="flex items-center gap-2 text-sm text-[var(--fs-text-secondary)]">
                   <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full motion-safe:animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-safe:animate-ping" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                   </span>
                   <span className="font-mono text-xs">{live.fileName}</span>
                   {live.lastUpdate && (
-                    <span className="text-xs text-slate-600">
+                    <span className="text-xs">
                       · updated {new Date(live.lastUpdate).toLocaleTimeString()}
                     </span>
                   )}
                 </div>
               )}
+
+              {scannerOffline && (
+                <div className="flex items-center gap-2 text-sm text-[var(--fs-warning)]">
+                  <CircleAlert className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="font-mono text-xs">{live.fileName}</span>
+                  <span className="text-xs">
+                    · offline
+                    {live.lastUpdate
+                      ? ` · last scan ${new Date(live.lastUpdate).toLocaleTimeString()}`
+                      : ""}
+                  </span>
+                </div>
+              )}
             </div>
           )
         ) : (
-          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-warning-light)] p-3 text-[var(--fs-warning)]">
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <p className="text-xs leading-relaxed">
-              This browser can't watch files live (the File System Access API works on{" "}
-              <b>Chrome / Edge</b> on desktop). Use the paste option below instead.
+              This browser cannot watch a file live. Use Chrome or Edge on a desktop, or paste a
+              scan in step 3.
             </p>
           </div>
         )}
 
         {live.error && (
-          <div className="mt-3 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-rose-800">
-            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-danger-light)] p-3 text-[var(--fs-danger)]">
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <p className="text-xs">{live.error}</p>
           </div>
         )}
       </Card>
 
-      {/* FALLBACK — paste once */}
       <Card
-        className={cn("transition", dragOver && "border-indigo-400 ring-2 ring-indigo-100")}
+        className={cn(
+          "transition",
+          dragOver && "border-[var(--fs-primary)] ring-2 ring-[var(--fs-primary-light)]"
+        )}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -345,53 +290,129 @@ export function ScanImport({
           if (f) void dropFile(f);
         }}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="rounded-lg bg-slate-100 p-2 text-slate-500">
-            <Upload className="h-4 w-4" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Or paste once / drop scan.txt</h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Drop the file anywhere on this card, or paste{" "}
-              <code className="rounded bg-slate-100 px-1">netsh wlan show networks mode=bssid</code>{" "}
-              output below.
-            </p>
-          </div>
-        </div>
+        <StepHeading
+          number={3}
+          icon={Upload}
+          title="Or use a scan once"
+          text="Drop scan.txt anywhere on this card, or paste the output of “netsh wlan show networks mode=bssid” below. This is the fallback when live reading is not available."
+        />
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Paste netsh output here…"
-          className="mt-3 h-40 w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-700 focus:border-indigo-400 sm:text-xs"
+          placeholder="Paste the Wi-Fi scan output here…"
+          className="mt-3 h-40 w-full resize-y rounded-xl border border-[var(--fs-border)] bg-[var(--fs-bg-secondary)] p-3 font-mono text-xs leading-relaxed text-[var(--fs-text)] focus:border-[var(--fs-primary)]"
         />
         <ImportFooter text={text} onImport={ingestPasted} />
       </Card>
 
+      <Card tone="success">
+        <details className="group" open={live.bridge ? true : undefined}>
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 marker:hidden">
+            <span className="flex items-center gap-2.5">
+              <span className="rounded-lg bg-[var(--fs-success)] p-2 text-white">
+                <Download className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-[var(--fs-text)]">
+                  Using a hosted copy? Run the portable scanner
+                </span>
+                <span className="mt-0.5 block text-xs text-[var(--fs-text-secondary)]">
+                  For GitHub Pages or any copy that is not running on this PC.
+                </span>
+              </span>
+            </span>
+            <ChevronDown
+              className="h-4 w-4 shrink-0 text-[var(--fs-text-muted)] transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
+
+          <div className="mt-3 space-y-3 border-t border-[var(--fs-border)] pt-3">
+            <p className="text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+              Download the scanner, run it, then click Connect. It serves the scan file only on
+              this computer (127.0.0.1) behind a random token. Nothing is uploaded.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => downloadBridgeBat("wifi")}
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--fs-success)] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+              >
+                <Download className="h-4 w-4" aria-hidden="true" />
+                Download Wi-Fi scanner (.bat)
+              </button>
+              {live.bridge && live.supported && (
+                <button
+                  onClick={live.watching ? live.stop : live.start}
+                  className={cn(
+                    "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
+                    live.watching
+                      ? "bg-[var(--fs-danger)] hover:opacity-90"
+                      : "bg-[var(--fs-primary)] hover:bg-[var(--fs-primary-hover)]"
+                  )}
+                >
+                  {live.watching ? (
+                    <Square className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Link2 className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {live.watching ? "Stop scanner" : "Connect local scanner"}
+                </button>
+              )}
+              {live.bridge && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--fs-bg)] px-3 py-1 text-xs font-medium text-[var(--fs-success)] ring-1 ring-[var(--fs-border)]">
+                  <Link2 className="h-3.5 w-3.5" aria-hidden="true" /> scanner detected
+                </span>
+              )}
+            </div>
+
+            <ol className="list-decimal space-y-1 pl-5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+              <li>Download and run the scanner. If Windows SmartScreen appears, choose More info → Run anyway.</li>
+              <li>Keep its window open. It opens this page already pointed at the scanner.</li>
+              <li>
+                Click <b>Connect local scanner</b> and allow <b>local network access</b> when the
+                browser asks. Chrome and Edge work; Safari blocks this.
+              </li>
+            </ol>
+
+            {live.bridge && permission === "denied" && (
+              <div className="flex items-start gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-danger-light)] p-3 text-[var(--fs-danger)]">
+                <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <p className="text-xs leading-relaxed">
+                  Local network access is blocked for this site. Allow Local network / Loopback
+                  access in the browser&apos;s site settings, then click Connect again.
+                </p>
+              </div>
+            )}
+
+            {live.bridge && permission === "prompt" && (!live.watching || live.error) && (
+              <p className="text-xs text-[var(--fs-success)]">
+                The browser will ask for local network access when you click Connect.
+              </p>
+            )}
+          </div>
+        </details>
+      </Card>
+
       <HowItWorks>
         <p>
-          This tab is the <b>data source</b> for the dashboard — it controls how FloorScope reads{" "}
-          <b>scan.txt</b>. When you launch with <b>start-wifi.bat</b>, the scan loop and live mode
-          are already running. On a hosted site (e.g. GitHub Pages), use the Wi-Fi{" "}
-          <b>portable scanner</b> above. Wired LAN scanning has its own scanner in the Wired tab.
+          This tab controls how FloorScope reads <b>scan.txt</b>. When you launch with{" "}
+          <b>start-wifi.bat</b>, the scanner and live reading are already running. On a hosted copy,
+          use the portable scanner above. Wired scanning has its own scanner in the Wired tab.
         </p>
         <div>
-          <p className="font-semibold text-slate-700">What the numbers mean</p>
+          <p className="font-semibold text-[var(--fs-text)]">What the numbers mean</p>
           <ul className="mt-1 list-disc space-y-1 pl-4">
             <li>
-              <b>{aps.length}</b> on the <b>Live setup</b> tab badge: unique access points in the
-              most recent scan (not the number of scans).
+              <b>{aps.length}</b> access points: distinct Wi-Fi boxes seen in the latest scan, not
+              the number of scans.
             </li>
             <li>
-              <b>Updated 14:32:05</b>: when a new scan was last read. If it stops changing, the
-              loop, dev server, or scanner bridge is not running.
+              <b>Last reading</b>: when a new scan was last read. If it stops changing, the scanner
+              window is no longer running.
             </li>
             <li>
-              <b>AP Registry</b> badge: how many BSSIDs you&apos;ve assigned a building, floor, or
-              location.
-            </li>
-            <li>
-              The loop writes a new scan every <b>5 s</b>; FloorScope checks for changes about every{" "}
-              <b>1.2 s</b>.
+              The scanner writes a new file every <b>5 seconds</b>; FloorScope checks for changes
+              about every <b>1.2 seconds</b>.
             </li>
           </ul>
         </div>
@@ -400,37 +421,64 @@ export function ScanImport({
   );
 }
 
+function StepHeading({
+  number,
+  icon: Icon,
+  title,
+  text,
+}: {
+  number: number;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <div className="rounded-lg bg-[var(--fs-primary-light)] p-2 text-[var(--fs-primary)]">
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </div>
+      <div>
+        <h2 className="text-sm font-semibold text-[var(--fs-text)]">
+          {number}. {title}
+        </h2>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--fs-text-secondary)]">{text}</p>
+      </div>
+    </div>
+  );
+}
+
 function ImportFooter({ text, onImport }: { text: string; onImport: () => void }) {
   const res = text.trim() ? parseScan(text) : null;
   return (
     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-      <div className="text-xs text-slate-500">
+      <div className="text-xs text-[var(--fs-text-secondary)]">
         {res ? (
           <>
-            Preview: <span className="font-semibold text-slate-700">{res.format}</span> ·{" "}
-            <span className="font-semibold text-slate-700">{res.aps.length}</span> APs
+            Ready: <span className="font-semibold text-[var(--fs-text)]">{res.format}</span> ·{" "}
+            <span className="font-semibold text-[var(--fs-text)]">{res.aps.length}</span> access
+            points
             {res.connected && (
               <>
                 {" "}
-                · <span className="font-semibold text-indigo-600">connected AP detected</span>
+                · <span className="font-semibold text-[var(--fs-success)]">connected AP found</span>
               </>
             )}
           </>
         ) : (
-          "Waiting for input…"
+          "Waiting for a scan…"
         )}
       </div>
       <button
         onClick={onImport}
         disabled={!res || (res.aps.length === 0 && !res.connected)}
         className={cn(
-          "min-h-11 w-full rounded-lg px-4 py-2 text-sm font-semibold text-white transition sm:w-auto",
+          "min-h-11 w-full rounded-lg px-4 py-2 text-sm font-semibold transition sm:w-auto",
           !res || (res.aps.length === 0 && !res.connected)
-            ? "cursor-not-allowed bg-slate-200 text-slate-500"
-            : "bg-indigo-600 hover:bg-indigo-500"
+            ? "cursor-not-allowed bg-[var(--fs-bg-tertiary)] text-[var(--fs-text-muted)]"
+            : "bg-[var(--fs-primary)] text-white hover:bg-[var(--fs-primary-hover)]"
         )}
       >
-        Analyze {res && res.aps.length > 0 ? `${res.aps.length} APs` : ""} →
+        Use this scan and open Overview
       </button>
     </div>
   );
@@ -445,20 +493,24 @@ function StatusItem({
   label: string;
   value: string;
   hint: string;
-  tone?: "good" | "muted";
+  tone?: "good" | "warning" | "muted";
 }) {
   return (
-    <div className="rounded-xl bg-slate-50 px-3 py-2">
-      <p className="label-caps text-slate-600">{label}</p>
+    <div className="rounded-xl bg-[var(--fs-bg-secondary)] px-3 py-2">
+      <p className="label-caps text-[var(--fs-text-muted)]">{label}</p>
       <p
         className={cn(
           "mt-0.5 text-sm font-semibold",
-          tone === "good" ? "text-emerald-700" : "text-slate-800"
+          tone === "good"
+            ? "text-[var(--fs-success)]"
+            : tone === "warning"
+              ? "text-[var(--fs-warning)]"
+              : "text-[var(--fs-text)]"
         )}
       >
         {value}
       </p>
-      <p className="text-micro text-slate-600">{hint}</p>
+      <p className="text-micro text-[var(--fs-text-secondary)]">{hint}</p>
     </div>
   );
 }
