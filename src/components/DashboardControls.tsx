@@ -36,8 +36,9 @@ export function DashboardControls({
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, []);
 
-  const scannerLive = live.watching && !live.stale;
+  const scannerLive = live.watching && !live.stale && live.lastUpdate !== null;
   const scannerOffline = live.watching && live.stale;
+  const scannerWaiting = live.watching && !live.stale && live.lastUpdate === null;
   const lastScanTime = live.lastUpdate
     ? new Date(live.lastUpdate).toLocaleTimeString([], {
         hour: "2-digit",
@@ -142,6 +143,10 @@ export function DashboardControls({
                 {lastScanTime ? `last scan ${lastScanTime}` : "no scan received"}
               </span>
             </div>
+          ) : scannerWaiting ? (
+            <span className="inline-flex min-h-11 items-center rounded-full bg-[var(--fs-bg-tertiary)] px-3 text-xs text-[var(--fs-text-secondary)]">
+              Waiting for first scan
+            </span>
           ) : (
             <span className="inline-flex min-h-11 items-center rounded-full bg-[var(--fs-bg-tertiary)] px-3 text-xs text-[var(--fs-text-secondary)]">
               Not live — showing the last scan

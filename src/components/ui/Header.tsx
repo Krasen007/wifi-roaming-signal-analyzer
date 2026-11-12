@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   BookOpen,
   Database,
@@ -60,6 +60,7 @@ interface HeaderProps {
 export function Header({ tab, setTab, live, format, watching, badges }: HeaderProps) {
   const [helpOpen, setHelpOpen] = useState(false);
   const activeTab = TABS.find((item) => item.key === tab);
+  const closeHelp = useCallback(() => setHelpOpen(false), []);
 
   return (
     <>
@@ -192,7 +193,7 @@ export function Header({ tab, setTab, live, format, watching, badges }: HeaderPr
         </div>
       </header>
 
-      <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <HelpDialog open={helpOpen} onClose={closeHelp} />
     </>
   );
 }

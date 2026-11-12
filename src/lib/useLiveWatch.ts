@@ -108,6 +108,7 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
     };
 
     const tick = async () => {
+      markStale();
       const h = handleRef.current;
       if (!h) return;
       try {
@@ -118,9 +119,13 @@ export function useLiveWatch(onText: (text: string) => void): LiveWatch {
           const text = await f.text();
           const stamp = f.lastModified > 0 ? f.lastModified : Date.now();
           if (!cancelled) {
-            lastUpdateRef.current = stamp;
-            setLastUpdate(stamp);
-            setStale(Date.now() - stamp > LIVE_STALE_MS);
+            if (text.trim()) {
+              lastUpdateRef.current = stamp;
+              setLastUpdate(stamp);
+              setStale(Date.now() - stamp > LIVE_STALE_MS);
+            } else {
+              markStale();
+            }
             if (text) setError(null);
             onTextRef.current(text);
           }

@@ -191,7 +191,7 @@ export default function App() {
         setFormat(fmt);
       }
       if (connected) updateConnected(connected.bssid);
-      if (!autoNavRef.current) {
+      if (parsed.length > 0 && !autoNavRef.current) {
         autoNavRef.current = true;
         setTab("dashboard");
       }
@@ -210,7 +210,7 @@ export default function App() {
         setTab={setTab}
         live={live}
         format={format}
-        watching={(watching && !live.stale) || wiredLive.watching}
+        watching={watching && !live.stale && live.lastUpdate !== null}
         badges={{
           dashboard: undefined,
           import: aps.length || undefined,

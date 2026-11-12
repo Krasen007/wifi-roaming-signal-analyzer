@@ -11,15 +11,15 @@ export type ButtonSize = "sm" | "md" | "lg";
 
 const variants: Record<ButtonVariant, string> = {
   default:
-    "bg-[var(--fs-primary)] text-white border-transparent hover:bg-[var(--fs-primary-hover)] hover:shadow-sm",
+    "bg-[var(--fs-primary-action)] text-white border-transparent hover:bg-[var(--fs-primary-action-hover)] hover:shadow-sm",
   outline:
     "border border-[var(--fs-border)] bg-[var(--fs-bg)] text-[var(--fs-text)] hover:bg-[var(--fs-bg-secondary)]",
   ghost:
     "bg-transparent text-[var(--fs-text-secondary)] hover:bg-[var(--fs-bg-tertiary)]",
   danger:
-    "bg-[var(--fs-danger)] text-white border-transparent hover:opacity-90",
+    "bg-[var(--fs-danger-action)] text-white border-transparent hover:opacity-90",
   success:
-    "bg-[var(--fs-success)] text-white border-transparent hover:opacity-90",
+    "bg-[var(--fs-success-action)] text-white border-transparent hover:opacity-90",
 };
 
 const sizes: Record<ButtonSize, string> = {

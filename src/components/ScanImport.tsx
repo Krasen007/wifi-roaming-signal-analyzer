@@ -46,8 +46,9 @@ export function ScanImport({
     void queryLoopbackPermission().then(setPermission);
   }, [live.bridge, live.watching]);
 
-  const scannerLive = live.watching && !live.stale;
+  const scannerLive = live.watching && !live.stale && live.lastUpdate !== null;
   const scannerOffline = live.watching && live.stale;
+  const scannerWaiting = live.watching && !live.stale && live.lastUpdate === null;
   const staleSeconds = Math.round(LIVE_STALE_MS / 1000);
 
   const copyLoop = () => {
@@ -60,7 +61,7 @@ export function ScanImport({
     const res = parseScan(text);
     if (res.aps.length === 0 && !res.connected) return;
     onParsed(res.aps, res.format, res.connected);
-    onGoToDashboard();
+    if (res.aps.length > 0) onGoToDashboard();
   };
 
   const dropFile = async (file: File) => {
@@ -75,7 +76,7 @@ export function ScanImport({
     const res = parseScan(t);
     if (res.aps.length === 0 && !res.connected) return;
     onParsed(res.aps, res.format, res.connected);
-    onGoToDashboard();
+    if (res.aps.length > 0) onGoToDashboard();
   };
 
   return (
@@ -99,13 +100,23 @@ export function ScanImport({
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <StatusItem
             label="Scanner"
-            value={scannerLive ? "Running" : scannerOffline ? "Offline" : "Not running"}
+            value={
+              scannerLive
+                ? "Running"
+                : scannerOffline
+                  ? "Offline"
+                  : scannerWaiting
+                    ? "Waiting"
+                    : "Not running"
+            }
             hint={
               scannerLive
                 ? "readings are flowing in"
                 : scannerOffline
                   ? `no new scan for ${staleSeconds} seconds`
-                  : "follow the steps below"
+                  : scannerWaiting
+                    ? "waiting for the first reading"
+                    : "follow the steps below"
             }
             tone={scannerLive ? "good" : scannerOffline ? "warning" : "muted"}
           />
@@ -153,6 +164,10 @@ export function ScanImport({
               scan appears.
             </p>
           </div>
+        ) : scannerWaiting ? (
+          <p className="mt-3 rounded-xl bg-[var(--fs-bg-secondary)] px-3 py-2.5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+            Scanner connected — waiting for its first reading.
+          </p>
         ) : (
           <p className="mt-3 rounded-xl bg-[var(--fs-bg-secondary)] px-3 py-2.5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
             Nothing is coming in yet. Follow step 1, then step 2. If live reading is not available

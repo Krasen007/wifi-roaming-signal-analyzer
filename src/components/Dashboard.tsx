@@ -124,8 +124,9 @@ export function Dashboard({
           </button>
         </div>
         <p className="mx-auto mt-3 max-w-md text-xs leading-relaxed text-[var(--fs-text-muted)]">
-          Already started a scanner? Make sure it is writing <b>scan.txt</b>, then reload this page
-          from the launcher so the dashboard can read it.
+          Using a hosted copy? Open the page launched by the scanner and choose{" "}
+          <b>Connect local scanner</b>. For a local install, make sure it is writing <b>scan.txt</b>,
+          then reload this page from the launcher.
         </p>
       </Card>
     );

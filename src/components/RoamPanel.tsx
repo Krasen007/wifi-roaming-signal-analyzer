@@ -128,7 +128,9 @@ export function RoamPanel({
   } else if (connected) {
     tone = "good";
     title = "Your connection looks good";
-    message = `You're connected to ${connectedLoc ?? "the strongest access point nearby"}. No stronger access point is visible right now.`;
+    message = `You're connected to ${
+      connectedLoc ?? bssidDisplayName(registry, connected.bssid)
+    }. No stronger access point is strong enough to cross the roaming threshold.`;
     action = "Nothing to do — keep walking and the status will update automatically.";
   }
 
