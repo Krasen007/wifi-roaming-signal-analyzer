@@ -622,13 +622,14 @@ export function WiredPanel({
               <th className="px-4 py-2 font-medium">Port</th>
               <th className="px-4 py-2 font-medium">VLAN</th>
               <th className="px-4 py-2 font-medium">Gateway</th>
+              <th className="px-4 py-2 font-medium">Notes</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-600">
+                <td colSpan={10} className="px-4 py-8 text-center text-sm text-slate-600">
                   No sockets saved yet — connect a wired scanner and save the first one above.
                 </td>
               </tr>
@@ -698,6 +699,14 @@ export function WiredPanel({
                   ) : (
                     "—"
                   )}
+                </td>
+                <td className="px-4 py-2" data-label="Notes">
+                  <input
+                    value={entry.notes}
+                    onChange={(e) => patch(key, { notes: e.target.value })}
+                    placeholder="optional notes"
+                    className="w-32 rounded-md border border-slate-200 px-2 py-2 text-xs focus:border-indigo-400"
+                  />
                 </td>
                 <td className="px-4 py-2 text-right">
                   <button
