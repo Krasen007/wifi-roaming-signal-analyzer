@@ -29,7 +29,7 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
       className={cn(
-        "inline-flex items-center justify-center gap-1 rounded-[var(--fs-radius-md)] border border-[var(--fs-border)] bg-[var(--fs-bg)] px-2.5 py-1.5 text-[var(--fs-text-secondary)] hover:bg-[var(--fs-bg-secondary)] hover:text-[var(--fs-text)] transition-colors",
+        "inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-[var(--fs-radius-md)] border border-[var(--fs-border)] bg-[var(--fs-bg)] px-2.5 py-1.5 text-[var(--fs-text-secondary)] hover:bg-[var(--fs-bg-secondary)] hover:text-[var(--fs-text)] transition-colors",
         theme === "dark" && "text-[var(--fs-primary)] border-[var(--fs-primary)]"
       )}
     >

@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/*
+ * Register the project's text scale with Tailwind so `text-micro` is a real
+ * utility. The variable is also emitted into :root, which keeps the
+ * `label-caps` helper working.
+ */
+@theme {
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1rem;
+}
+
 @layer base {
   :root {
     --fs-bg: #ffffff;
@@ -25,8 +35,6 @@
     --fs-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --fs-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08),
       0 2px 4px -2px rgb(0 0 0 / 0.04);
-    --text-micro: 0.6875rem;
-    --text-micro--line-height: 1rem;
   }
 
   .dark {
@@ -53,6 +61,26 @@
   body {
     background-color: var(--fs-bg);
     color: var(--fs-text);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 
   button:not(:disabled),
@@ -74,6 +102,156 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
+}
+
+/*
+ * Dark-mode bridge.
+ *
+ * Most components still use Tailwind's fixed slate/indigo/emerald palette.
+ * These unlayered rules remap the handful of colours that would otherwise
+ * become unreadable when the theme is dark (for example a near-black heading on
+ * the near-black page). New components should prefer the --fs-* tokens, but
+ * this keeps every existing screen legible without a risky class-by-class
+ * rewrite.
+ */
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: var(--fs-text);
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: var(--fs-text-secondary);
+}
+
+.dark .text-slate-500 {
+  color: var(--fs-text-muted);
+}
+
+.dark .text-slate-400 {
+  color: #64748b;
+}
+
+.dark .text-slate-300 {
+  color: #475569;
+}
+
+.dark .text-indigo-900,
+.dark .text-indigo-800,
+.dark .text-indigo-700,
+.dark .text-indigo-600,
+.dark .text-indigo-500 {
+  color: #a5b4fc;
+}
+
+.dark .text-emerald-900,
+.dark .text-emerald-800,
+.dark .text-emerald-700 {
+  color: #6ee7b7;
+}
+
+.dark .text-emerald-600 {
+  color: #34d399;
+}
+
+.dark .text-amber-900,
+.dark .text-amber-800,
+.dark .text-amber-700 {
+  color: #fcd34d;
+}
+
+.dark .text-rose-900,
+.dark .text-rose-800,
+.dark .text-rose-700 {
+  color: #fda4af;
+}
+
+.dark .text-rose-600,
+.dark .text-rose-500 {
+  color: #fb7185;
+}
+
+.dark .text-lime-600 {
+  color: #a3e635;
+}
+
+.dark .text-orange-600 {
+  color: #fb923c;
+}
+
+.dark .bg-white {
+  background-color: var(--fs-bg-secondary);
+}
+
+.dark .bg-slate-50 {
+  background-color: var(--fs-bg-secondary);
+}
+
+.dark .bg-slate-100 {
+  background-color: var(--fs-bg-tertiary);
+}
+
+.dark .bg-slate-200 {
+  background-color: #334155;
+}
+
+.dark .bg-indigo-50,
+.dark .bg-indigo-100 {
+  background-color: rgb(99 102 241 / 0.18);
+}
+
+.dark .bg-emerald-50,
+.dark .bg-emerald-100 {
+  background-color: rgb(16 185 129 / 0.16);
+}
+
+.dark .bg-amber-50,
+.dark .bg-amber-100 {
+  background-color: rgb(245 158 11 / 0.16);
+}
+
+.dark .bg-rose-50,
+.dark .bg-rose-100 {
+  background-color: rgb(244 63 94 / 0.16);
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300 {
+  border-color: var(--fs-border);
+}
+
+.dark .border-indigo-200 {
+  border-color: rgb(99 102 241 / 0.38);
+}
+
+.dark .border-emerald-200 {
+  border-color: rgb(16 185 129 / 0.38);
+}
+
+.dark .border-amber-200 {
+  border-color: rgb(245 158 11 / 0.38);
+}
+
+.dark .border-rose-200 {
+  border-color: rgb(244 63 94 / 0.38);
+}
+
+.dark .divide-slate-100 > * + *,
+.dark .divide-slate-200 > * + * {
+  border-color: var(--fs-border);
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+  background-color: var(--fs-bg-secondary);
+  color: var(--fs-text);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b;
 }
 
 /* Responsive tables: stack rows below 768px instead of forcing horizontal scroll */
