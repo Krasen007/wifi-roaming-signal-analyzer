@@ -69,7 +69,7 @@ export function LiveHistoryChart({
 }) {
   const [focus, setFocus] = useState<string | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ w: 640, h: 280 });
+  const [size, setSize] = useState({ w: 640, h: 340 });
 
   // Measure the container so one SVG user unit is one CSS pixel at every width.
   useLayoutEffect(() => {
@@ -77,7 +77,7 @@ export function LiveHistoryChart({
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
       const w = Math.max(280, Math.round(entry.contentRect.width));
-      const h = w < 480 ? 220 : 280;
+      const h = w < 480 ? 260 : 340;
       setSize((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
     });
     ro.observe(el);
@@ -134,8 +134,8 @@ export function LiveHistoryChart({
     <Card padding="lg">
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Live signal history</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="text-base font-semibold text-[var(--fs-text)]">Live signal history</h2>
+          <p className="mt-1 text-sm text-[var(--fs-text-secondary)]">
             Signal per AP over the last ~{spanMin} min. Dotted parts = AP out of range. Vertical
             lines mark a connection drop (red) or a roam to another AP (amber). Click a line or
             legend chip to isolate it.
@@ -165,25 +165,37 @@ export function LiveHistoryChart({
         <svg viewBox={`0 0 ${W} ${H}`} className="mt-4 block w-full" style={{ height: H }}>
           {ticks.map((t) => (
             <g key={t}>
-              <line x1={PAD_L} x2={W - PAD_R} y1={y(t)} y2={y(t)} stroke="#e2e8f0" strokeWidth={1} />
-              <text x={PAD_L - 6} y={y(t) + 3} textAnchor="end" fontSize={11} fill="#94a3b8">
+              <line x1={PAD_L} x2={W - PAD_R} y1={y(t)} y2={y(t)} stroke="var(--fs-border)" strokeWidth={1} />
+              <text x={PAD_L - 6} y={y(t) + 3} textAnchor="end" fontSize={12} fill="var(--fs-text-muted)">
                 {t}
               </text>
             </g>
           ))}
-          <text x={W - PAD_R} y={H - 6} textAnchor="end" fontSize={11} fill="#94a3b8">
+          <text x={W - PAD_R} y={H - 6} textAnchor="end" fontSize={12} fill="var(--fs-text-muted)">
             now
           </text>
-          <text x={PAD_L} y={H - 6} textAnchor="start" fontSize={11} fill="#94a3b8">
+          <text x={PAD_L} y={H - 6} textAnchor="start" fontSize={12} fill="var(--fs-text-muted)">
             -{spanMin} min
           </text>
+
+          {/* "now" marker — vertical line at the right edge */}
+          <line
+            x1={W - PAD_R}
+            x2={W - PAD_R}
+            y1={PAD_T}
+            y2={H - PAD_B}
+            stroke="var(--fs-primary)"
+            strokeWidth={1.5}
+            strokeDasharray="5 5"
+            opacity={0.6}
+          />
 
           {series.map((s) => {
             const isConn = s.bssid === connectedBssid;
             const isFocused = focus === s.bssid;
             const dimmed = focus != null && !isFocused;
             const c = colorFor(s.bssid);
-            const width = isFocused ? 3.4 : isConn ? 3 : 1.8;
+            const width = isFocused ? 4 : isConn ? 3.5 : 2.2;
             const baseOpacity = dimmed ? 0.12 : 0.9;
             const lastSeg = s.segments.segs[s.segments.segs.length - 1];
             const lastPt = lastSeg?.[lastSeg.length - 1];
@@ -205,10 +217,10 @@ export function LiveHistoryChart({
                     x2={x(g.to.t)}
                     y2={y(g.to.dbm)}
                     stroke={c}
-                    strokeWidth={dimmed ? 1 : 1.4}
+                    strokeWidth={dimmed ? 1.2 : 1.8}
                     strokeDasharray="2 5"
                     strokeLinecap="round"
-                    opacity={dimmed ? 0.08 : 0.4}
+                    opacity={dimmed ? 0.1 : 0.5}
                   />
                 ))}
                 {/* solid segments — AP in range */}
@@ -218,7 +230,7 @@ export function LiveHistoryChart({
                       key={`seg-${i}`}
                       cx={x(seg[0].t)}
                       cy={y(seg[0].dbm)}
-                      r={2.5}
+                      r={3}
                       fill={c}
                       opacity={baseOpacity}
                     />
@@ -254,20 +266,20 @@ export function LiveHistoryChart({
                       <circle
                         cx={x(lastPt.t)}
                         cy={y(lastPt.dbm)}
-                        r={7.5}
+                        r={9}
                         fill="none"
                         stroke={c}
-                        strokeWidth={2}
+                        strokeWidth={2.5}
                         opacity={dimmed ? 0.15 : 1}
                       />
                     )}
                     <circle
                       cx={x(lastPt.t)}
                       cy={y(lastPt.dbm)}
-                      r={isConn || isFocused ? 4 : 2.5}
+                      r={isConn || isFocused ? 5 : 3.5}
                       fill={c}
                       stroke="#fff"
-                      strokeWidth={1}
+                      strokeWidth={1.2}
                       opacity={dimmed ? 0.15 : 1}
                     />
                   </g>
@@ -290,24 +302,24 @@ export function LiveHistoryChart({
                   y1={PAD_T}
                   y2={H - PAD_B}
                   stroke={color}
-                  strokeWidth={1.4}
+                  strokeWidth={1.6}
                   strokeDasharray="3 4"
-                  opacity={0.85}
+                  opacity={0.9}
                 >
                   <title>
                     {label} · {new Date(e.t).toLocaleTimeString()}
                   </title>
                 </line>
-                <circle cx={x(e.t)} cy={PAD_T} r={2.5} fill={color} />
+                <circle cx={x(e.t)} cy={PAD_T} r={3} fill={color} />
               </g>
             );
           })}
         </svg>
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         {series.length === 0 && (
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[var(--fs-text-secondary)]">
             No signal history yet — new scans will draw the lines again.
           </p>
         )}
