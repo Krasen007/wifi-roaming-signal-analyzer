@@ -1,17 +1,7 @@
-import { useCallback, useState } from "react";
-import {
-  BookOpen,
-  Database,
-  FileText,
-  LayoutDashboard,
-  Network,
-  TriangleAlert,
-  Wifi,
-} from "lucide-react";
+import { Database, FileText, LayoutDashboard, Network, TriangleAlert, Wifi } from "lucide-react";
 import type { LiveWatch } from "../../lib/useLiveWatch";
 import { Badge } from "../ui/Badge";
 import { ThemeToggle } from "./ThemeToggle";
-import { HelpDialog } from "./HelpDialog";
 import { cn } from "../../utils/cn";
 
 type Tab = "dashboard" | "import" | "registry" | "wired";
@@ -37,9 +27,6 @@ interface HeaderProps {
 }
 
 export function Header({ tab, setTab, live, format, watching, badges }: HeaderProps) {
-  const [helpOpen, setHelpOpen] = useState(false);
-  const closeHelp = useCallback(() => setHelpOpen(false), []);
-
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-[var(--fs-border)] bg-[var(--fs-bg-secondary)]/85 backdrop-blur-md supports-[backdrop-filter]:bg-[var(--fs-bg-secondary)]/65">
@@ -130,15 +117,6 @@ export function Header({ tab, setTab, live, format, watching, badges }: HeaderPr
                 </Badge>
               )}
               {format && <span className="sr-only">Scan format: {format}</span>}
-              <button
-                type="button"
-                onClick={() => setHelpOpen(true)}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--fs-radius-md)] border border-[var(--fs-border)] bg-[var(--fs-bg)] px-2.5 text-sm font-medium text-[var(--fs-text-secondary)] transition-colors hover:bg-[var(--fs-bg-tertiary)] hover:text-[var(--fs-text)]"
-                aria-label="About FloorScope"
-              >
-                <BookOpen className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden lg:inline">About</span>
-              </button>
               <ThemeToggle />
             </div>
           </div>
@@ -165,8 +143,6 @@ export function Header({ tab, setTab, live, format, watching, badges }: HeaderPr
 
         </div>
       </header>
-
-      <HelpDialog open={helpOpen} onClose={closeHelp} />
     </>
   );
 }
