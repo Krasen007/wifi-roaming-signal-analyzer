@@ -452,6 +452,95 @@ export function WiredPanel({
             )}
           </Card>
 
+          {/* Save current socket */}
+          <Card tone="accent">
+            <div className="flex items-center gap-2">
+              <Save className="h-4 w-4 text-indigo-600" />
+              <h2 className="text-sm font-semibold text-slate-900">Save this wall socket</h2>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Label the socket and map it to a building, floor, and room — switch and port auto-fill
+              from LLDP when available.
+            </p>
+
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <Field
+                label="Socket label"
+                value={socket}
+                placeholder="e.g. 3F-R12-A"
+                onChange={(v) => {
+                  socketTouched.current = true;
+                  setSocket(v);
+                }}
+              />
+              <Field label="Building" value={building} placeholder="e.g. HQ" onChange={setBuilding} />
+              <Field label="Floor" value={floor} placeholder="e.g. 3rd floor" onChange={setFloor} />
+              <Field
+                label="Switch name"
+                value={switchName}
+                placeholder="from LLDP, or type it"
+                onChange={(v) => {
+                  switchTouched.current = true;
+                  setSwitchName(v);
+                }}
+              />
+              <Field
+                label="Switch port"
+                value={switchPort}
+                placeholder="from LLDP, or type it"
+                onChange={(v) => {
+                  portTouched.current = true;
+                  setSwitchPort(v);
+                }}
+              />
+              <Field
+                label="VLAN"
+                value={vlan}
+                placeholder="optional"
+                onChange={(v) => {
+                  vlanTouched.current = true;
+                  setVlan(v);
+                }}
+              />
+              <Field
+                label="Location / room"
+                value={location}
+                placeholder="e.g. Meeting room 12"
+                onChange={setLocation}
+              />
+              <Field label="Notes" value={notes} placeholder="e.g. left wall, by the door" onChange={setNotes} />
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button
+                onClick={save}
+                disabled={!(socket.trim() || suggested)}
+                className={cn(
+                  "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition",
+                  !(socket.trim() || suggested)
+                    ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                    : "bg-indigo-600 hover:bg-indigo-500"
+                )}
+              >
+                <Save className="h-4 w-4" />
+                Save socket
+              </button>
+              <span className="text-xs text-slate-500">
+                {apMatches.length > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 text-emerald-700">
+                    <Check className="h-3.5 w-3.5" />
+                    {apMatches.length} Wi-Fi AP{apMatches.length === 1 ? "" : "s"} registered in this
+                    building/floor — wired and Wi-Fi are in the same area.
+                  </span>
+                ) : building.trim() || floor.trim() ? (
+                  "No Wi-Fi AP registered for this building/floor yet."
+                ) : (
+                  "Set building/floor to cross-check against the AP registry."
+                )}
+              </span>
+            </div>
+          </Card>
+
           {/* Neighbours */}
           <Card padding="none" className="overflow-x-auto responsive-table">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
@@ -514,95 +603,6 @@ export function WiredPanel({
           </p>
         </Card>
       )}
-
-      {/* Save current socket */}
-      <Card tone="accent">
-        <div className="flex items-center gap-2">
-          <Save className="h-4 w-4 text-indigo-600" />
-          <h2 className="text-sm font-semibold text-slate-900">Save this wall socket</h2>
-        </div>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Label the socket and map it to a building, floor, and room — switch and port auto-fill
-          from LLDP when available.
-        </p>
-
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          <Field
-            label="Socket label"
-            value={socket}
-            placeholder="e.g. 3F-R12-A"
-            onChange={(v) => {
-              socketTouched.current = true;
-              setSocket(v);
-            }}
-          />
-          <Field label="Building" value={building} placeholder="e.g. HQ" onChange={setBuilding} />
-          <Field label="Floor" value={floor} placeholder="e.g. 3rd floor" onChange={setFloor} />
-          <Field
-            label="Switch name"
-            value={switchName}
-            placeholder="from LLDP, or type it"
-            onChange={(v) => {
-              switchTouched.current = true;
-              setSwitchName(v);
-            }}
-          />
-          <Field
-            label="Switch port"
-            value={switchPort}
-            placeholder="from LLDP, or type it"
-            onChange={(v) => {
-              portTouched.current = true;
-              setSwitchPort(v);
-            }}
-          />
-          <Field
-            label="VLAN"
-            value={vlan}
-            placeholder="optional"
-            onChange={(v) => {
-              vlanTouched.current = true;
-              setVlan(v);
-            }}
-          />
-          <Field
-            label="Location / room"
-            value={location}
-            placeholder="e.g. Meeting room 12"
-            onChange={setLocation}
-          />
-          <Field label="Notes" value={notes} placeholder="e.g. left wall, by the door" onChange={setNotes} />
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <button
-            onClick={save}
-            disabled={!(socket.trim() || suggested)}
-            className={cn(
-              "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition",
-              !(socket.trim() || suggested)
-                ? "cursor-not-allowed bg-slate-200 text-slate-500"
-                : "bg-indigo-600 hover:bg-indigo-500"
-            )}
-          >
-            <Save className="h-4 w-4" />
-            Save socket
-          </button>
-          <span className="text-xs text-slate-500">
-            {apMatches.length > 0 ? (
-              <span className="inline-flex items-center gap-1.5 text-emerald-700">
-                <Check className="h-3.5 w-3.5" />
-                {apMatches.length} Wi-Fi AP{apMatches.length === 1 ? "" : "s"} registered in this
-                building/floor — wired and Wi-Fi are in the same area.
-              </span>
-            ) : building.trim() || floor.trim() ? (
-              "No Wi-Fi AP registered for this building/floor yet."
-            ) : (
-              "Set building/floor to cross-check against the AP registry."
-            )}
-          </span>
-        </div>
-      </Card>
 
       {/* Registry */}
       <Card padding="none" className="overflow-x-auto responsive-table">

@@ -12,6 +12,7 @@ import { MAX_HISTORY_POINTS } from "./lib/types";
 import type { ConnectedInfo } from "./lib/parsers";
 import { parseScan } from "./lib/parsers";
 import { parseWired } from "./lib/wired";
+import { autoWiredSource } from "./lib/live";
 import { useLiveWatch } from "./lib/useLiveWatch";
 import { useWiredWatch } from "./lib/useWiredWatch";
 import {
@@ -35,7 +36,8 @@ import { Header } from "./components/ui/Header";
 type Tab = "dashboard" | "import" | "registry" | "wired";
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const wiredSource = autoWiredSource();
+  const [tab, setTab] = useState<Tab>(wiredSource ? "wired" : "dashboard");
   const [aps, setAps] = useState<AccessPoint[]>([]);
   const [format, setFormat] = useState("");
   const [registry, setRegistry] = useState<Registry>({});
