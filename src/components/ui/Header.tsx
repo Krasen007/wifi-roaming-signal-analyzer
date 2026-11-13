@@ -21,7 +21,7 @@ const TABS: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 }[] = [
-  { key: "dashboard", label: "Overview", icon: LayoutDashboard },
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "import", label: "Scanner", icon: FileText },
   { key: "registry", label: "Locations", icon: Database },
   { key: "wired", label: "Wired", icon: Network },

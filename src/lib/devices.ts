@@ -33,7 +33,7 @@ export interface DeviceColor {
 /**
  * Returns a consistent color scheme for a physical device based on its 1-based
  * index. The palette rotates after 8 devices so every device gets a distinct
- * colour that is used across the overview and location views.
+ * colour that is used across the dashboard and location views.
  */
 export function deviceColor(index: number): DeviceColor {
   const palette: DeviceColor[] = [

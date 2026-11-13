@@ -216,7 +216,7 @@ export function WiredPanel({
 
   return (
     <div className="space-y-6">
-      {/* Overview / source */}
+      {/* Dashboard / source */}
       <Card>
         <div className="flex items-start gap-2.5">
           <div className="rounded-lg bg-slate-900 p-2 text-white">

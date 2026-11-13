@@ -166,7 +166,7 @@ export function ScanImport({
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
               FloorScope reads the scan file the loop writes to <b>scan.txt</b>. Start the loop,
-              then watch the Overview tab.
+              then watch the Dashboard tab.
             </p>
           </div>
         </div>
@@ -216,14 +216,14 @@ export function ScanImport({
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--fs-success-light)] px-3 py-2.5">
             <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--fs-success)]">
               <Check className="h-3.5 w-3.5" aria-hidden="true" />
-              Readings are coming in. Open the Overview tab.
+              Readings are coming in. Open the Dashboard tab.
             </p>
             <button
               type="button"
               onClick={onGoToDashboard}
               className="inline-flex min-h-11 items-center rounded-lg bg-[var(--fs-primary)] px-3 text-xs font-semibold text-white hover:bg-[var(--fs-primary-hover)]"
             >
-              Go to Overview
+              Go to Dashboard
             </button>
           </div>
         ) : scannerOffline ? (
@@ -234,7 +234,7 @@ export function ScanImport({
               updating.
             </p>
             <p className="mt-1 text-xs leading-relaxed">
-              The last scan is still on Overview. Live readings resume automatically when a new
+              The last scan is still on Dashboard. Live readings resume automatically when a new
               scan appears.
             </p>
           </div>
@@ -456,7 +456,7 @@ function ImportFooter({ text, onImport }: { text: string; onImport: () => void }
             : "bg-[var(--fs-primary)] text-white hover:bg-[var(--fs-primary-hover)]"
         )}
       >
-        Use this scan and open Overview
+        Use this scan and open Dashboard
       </button>
     </div>
   );
