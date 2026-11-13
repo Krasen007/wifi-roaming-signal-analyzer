@@ -24,6 +24,31 @@ export interface DeviceGroup {
   location: string | null;
 }
 
+export interface DeviceColor {
+  border: string;
+  bg: string;
+  text: string;
+}
+
+/**
+ * Returns a consistent color scheme for a physical device based on its 1-based
+ * index. The palette rotates after 8 devices so every device gets a distinct
+ * colour that is used across the overview and location views.
+ */
+export function deviceColor(index: number): DeviceColor {
+  const palette: DeviceColor[] = [
+    { border: "var(--fs-primary)", bg: "var(--fs-primary-light)", text: "var(--fs-primary)" },
+    { border: "var(--fs-success)", bg: "var(--fs-success-light)", text: "var(--fs-success)" },
+    { border: "var(--fs-warning)", bg: "var(--fs-warning-light)", text: "var(--fs-warning)" },
+    { border: "var(--fs-danger)", bg: "var(--fs-danger-light)", text: "var(--fs-danger)" },
+    { border: "var(--fs-device-5)", bg: "var(--fs-device-5-light)", text: "var(--fs-device-5)" },
+    { border: "var(--fs-device-6)", bg: "var(--fs-device-6-light)", text: "var(--fs-device-6)" },
+    { border: "var(--fs-device-7)", bg: "var(--fs-device-7-light)", text: "var(--fs-device-7)" },
+    { border: "var(--fs-device-8)", bg: "var(--fs-device-8-light)", text: "var(--fs-device-8)" },
+  ];
+  return palette[(index - 1) % palette.length];
+}
+
 export function groupDevices(aps: AccessPoint[], registry: Registry, connectedBssid = ""): DeviceGroup[] {
   const map = new Map<string, AccessPoint[]>();
   for (const ap of aps) {

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, ChevronsUpDown, MapPin } from "lucide-react";
 import type { AccessPoint, Band, Registry, RegistryEntry } from "../lib/types";
 import { quality } from "../lib/signal";
 import { registryValueSets } from "../lib/labels";
+import { groupDevices, deviceColor } from "../lib/devices";
 import { BandTag } from "./BandTag";
 import { SignalBars } from "./SignalBars";
 import { Card } from "./ui/Card";
@@ -90,6 +91,16 @@ export function RegistryManager({
     });
   }, [aps, registry, sort]);
 
+  const devices = useMemo(
+    () => groupDevices(aps, registry, connectedBssid),
+    [aps, registry, connectedBssid]
+  );
+  const devNumber = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const d of devices) for (const member of d.members) m.set(member.bssid, d.index);
+    return m;
+  }, [devices]);
+
   const update = (bssid: string, patch: Partial<RegistryEntry>) => {
     const prev = registry[bssid] ?? { bssid, building: "", floor: "", location: "" };
     const next: RegistryEntry = { ...prev, ...patch, bssid };
@@ -176,6 +187,9 @@ export function RegistryManager({
           <thead>
             <tr className="border-b border-[var(--fs-border)] bg-[var(--fs-bg-secondary)] text-left text-xs text-[var(--fs-text-secondary)]">
               <SortableTh label="Signal" sortKey="signal" sort={sort} onSort={toggleSort} />
+              <th className="px-1 py-1 font-medium text-left text-xs text-[var(--fs-text-secondary)]">
+                Device
+              </th>
               <SortableTh
                 label="Access point ID"
                 sortKey="bssid"
@@ -235,6 +249,19 @@ export function RegistryManager({
                       </div>
                     ) : (
                       <span className="text-xs text-[var(--fs-text-muted)]">not seen now</span>
+                    )}
+                  </td>
+                  <td className="px-1 py-1" data-label="Device">
+                    {row.ap != null && (
+                      <span
+                        className="rounded px-1.5 py-0.5 text-micro font-bold whitespace-nowrap"
+                        style={{
+                          backgroundColor: deviceColor(devNumber.get(row.ap.bssid) ?? 1).bg,
+                          color: deviceColor(devNumber.get(row.ap.bssid) ?? 1).text,
+                        }}
+                      >
+                        Unit {devNumber.get(row.ap.bssid)}
+                      </span>
                     )}
                   </td>
                   <td

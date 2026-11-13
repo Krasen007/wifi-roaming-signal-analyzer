@@ -1,4 +1,5 @@
 import type { DeviceGroup } from "../lib/devices";
+import { deviceColor } from "../lib/devices";
 import { SignalBars } from "./SignalBars";
 import { BandTag } from "./BandTag";
 import { ChevronDown, MapPin, RadioTower } from "lucide-react";
@@ -47,21 +48,32 @@ export function DevicesPanel({
         </summary>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {devices.map((dev) => (
-            <div
-              key={dev.key}
-              className={cn(
-                "rounded-xl p-3",
-                dev.connected
-                  ? "bg-[var(--fs-primary-light)]"
-                  : "bg-[var(--fs-bg-secondary)]"
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="shrink-0 rounded bg-[var(--fs-text)] px-1.5 py-0.5 text-micro font-bold text-[var(--fs-bg)]">
-                    Unit {dev.index}
-                  </span>
+          {devices.map((dev) => {
+            const color = deviceColor(dev.index);
+            return (
+              <div
+                key={dev.key}
+                className={cn(
+                  "rounded-xl p-3 border-l-4",
+                  dev.connected
+                    ? "bg-[var(--fs-primary-light)] border-[var(--fs-primary)]"
+                    : "bg-[var(--fs-bg-secondary)] border-[var(--fs-border)]"
+                )}
+                style={{ borderColor: color.border }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span
+                      className="shrink-0 rounded px-1.5 py-0.5 text-micro font-bold whitespace-nowrap"
+                      style={{
+                        backgroundColor: dev.connected
+                          ? "var(--fs-primary)"
+                          : color.bg,
+                        color: dev.connected ? "var(--fs-bg)" : color.text,
+                      }}
+                    >
+                      Unit {dev.index}
+                    </span>
                   <span className="truncate text-sm font-semibold text-[var(--fs-text)]">
                     {dev.displayName}
                   </span>
@@ -119,7 +131,7 @@ export function DevicesPanel({
                 {dev.members.map((m) => m.bssid.slice(-5)).join(" · ")}
               </p>
             </div>
-          ))}
+          )})}
         </div>
       </details>
     </Card>

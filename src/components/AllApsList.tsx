@@ -1,6 +1,7 @@
 import { MapPin, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { AccessPoint, History, Registry } from "../lib/types";
 import type { DeviceGroup } from "../lib/devices";
+import { deviceColor } from "../lib/devices";
 import { quality } from "../lib/signal";
 import { bssidDisplayName } from "../lib/labels";
 import { SignalBars } from "./SignalBars";
@@ -71,10 +72,14 @@ export function AllApsList({
                   >
                     {bssidDisplayName(registry, a.bssid)}
                   </span>
-                  {hasMultipleMembers && (
+                  {hasMultipleMembers && devIdx != null && (
                     <span
-                      className="rounded bg-[var(--fs-bg-tertiary)] px-1.5 py-0.5 text-micro font-bold text-[var(--fs-text-secondary)]"
+                      className="rounded px-1.5 py-0.5 text-micro font-bold whitespace-nowrap"
                       title="This box also broadcasts other network names"
+                      style={{
+                        backgroundColor: deviceColor(devIdx).bg,
+                        color: deviceColor(devIdx).text,
+                      }}
                     >
                       Unit {devIdx}
                       <span className="sr-only"> - shares hardware with other networks</span>
