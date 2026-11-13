@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   Activity,
   Check,
-  ChevronDown,
   CircleAlert,
   Copy,
   Download,
@@ -80,6 +79,82 @@ export function ScanImport({
 
   return (
     <div className="space-y-5">
+      <Card tone="success">
+        <div className="flex items-start gap-2.5">
+          <div className="rounded-lg bg-[var(--fs-success)] p-2 text-white">
+            <Download className="h-4 w-4" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-[var(--fs-text)]">
+              Using a hosted copy? Run the portable scanner
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+              For GitHub Pages or any copy not running on this PC.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-3 space-y-3">
+          <p className="text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+            Download the scanner, run it, then click Connect. It serves the scan file only on this
+            computer (127.0.0.1) behind a random token. Nothing is uploaded.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => downloadBridgeBat("wifi")}
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--fs-success)] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Download Wi-Fi scanner (.bat)
+            </button>
+            {live.bridge && live.supported && (
+              <button
+                onClick={live.watching ? live.stop : live.start}
+                className={cn(
+                  "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
+                  live.watching
+                    ? "bg-[var(--fs-danger)] hover:opacity-90"
+                    : "bg-[var(--fs-primary)] hover:bg-[var(--fs-primary-hover)]"
+                )}
+              >
+                {live.watching ? (
+                  <Square className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Link2 className="h-4 w-4" aria-hidden="true" />
+                )}
+                {live.watching ? "Stop scanner" : "Connect local scanner"}
+              </button>
+            )}
+            {live.bridge && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--fs-bg)] px-3 py-1 text-xs font-medium text-[var(--fs-success)] ring-1 ring-[var(--fs-border)]">
+                <Link2 className="h-3.5 w-3.5" aria-hidden="true" /> scanner detected
+              </span>
+            )}
+          </div>
+          <ol className="list-decimal space-y-1 pl-5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+            <li>Download and run the scanner.</li>
+            <li>Keep its window open.</li>
+            <li>
+              Click <b>Connect local scanner</b> and allow <b>local network access</b> when the
+              browser asks.
+            </li>
+          </ol>
+          {live.bridge && permission === "denied" && (
+            <div className="flex items-start gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-danger-light)] p-3 text-[var(--fs-danger)]">
+              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <p className="text-xs leading-relaxed">
+                Local network access is blocked for this site. Allow Local network / Loopback
+                access in the browser&apos;s site settings, then click Connect again.
+              </p>
+            </div>
+          )}
+          {live.bridge && permission === "prompt" && (!live.watching || live.error) && (
+            <p className="text-xs text-[var(--fs-success)]">
+              The browser will ask for local network access when you click Connect.
+            </p>
+          )}
+        </div>
+      </Card>
       <Card>
         <div className="flex items-start gap-2.5">
           <div className="rounded-lg bg-[var(--fs-primary-light)] p-2 text-[var(--fs-primary)]">
@@ -318,93 +393,6 @@ export function ScanImport({
         <ImportFooter text={text} onImport={ingestPasted} />
       </Card>
 
-      <Card tone="success">
-        <details className="group" open={live.bridge ? true : undefined}>
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 marker:hidden">
-            <span className="flex items-center gap-2.5">
-              <span className="rounded-lg bg-[var(--fs-success)] p-2 text-white">
-                <Download className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <span>
-                <span className="block text-sm font-semibold text-[var(--fs-text)]">
-                  Using a hosted copy? Run the portable scanner
-                </span>
-                <span className="mt-0.5 block text-xs text-[var(--fs-text-secondary)]">
-                  For GitHub Pages or any copy that is not running on this PC.
-                </span>
-              </span>
-            </span>
-            <ChevronDown
-              className="h-4 w-4 shrink-0 text-[var(--fs-text-muted)] transition-transform group-open:rotate-180"
-              aria-hidden="true"
-            />
-          </summary>
-
-          <div className="mt-3 space-y-3 border-t border-[var(--fs-border)] pt-3">
-            <p className="text-xs leading-relaxed text-[var(--fs-text-secondary)]">
-              Download the scanner, run it, then click Connect. It serves the scan file only on
-              this computer (127.0.0.1) behind a random token. Nothing is uploaded.
-            </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => downloadBridgeBat("wifi")}
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--fs-success)] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-              >
-                <Download className="h-4 w-4" aria-hidden="true" />
-                Download Wi-Fi scanner (.bat)
-              </button>
-              {live.bridge && live.supported && (
-                <button
-                  onClick={live.watching ? live.stop : live.start}
-                  className={cn(
-                    "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition",
-                    live.watching
-                      ? "bg-[var(--fs-danger)] hover:opacity-90"
-                      : "bg-[var(--fs-primary)] hover:bg-[var(--fs-primary-hover)]"
-                  )}
-                >
-                  {live.watching ? (
-                    <Square className="h-4 w-4" aria-hidden="true" />
-                  ) : (
-                    <Link2 className="h-4 w-4" aria-hidden="true" />
-                  )}
-                  {live.watching ? "Stop scanner" : "Connect local scanner"}
-                </button>
-              )}
-              {live.bridge && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--fs-bg)] px-3 py-1 text-xs font-medium text-[var(--fs-success)] ring-1 ring-[var(--fs-border)]">
-                  <Link2 className="h-3.5 w-3.5" aria-hidden="true" /> scanner detected
-                </span>
-              )}
-            </div>
-
-            <ol className="list-decimal space-y-1 pl-5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
-              <li>Download and run the scanner. If Windows SmartScreen appears, choose More info → Run anyway.</li>
-              <li>Keep its window open. It opens this page already pointed at the scanner.</li>
-              <li>
-                Click <b>Connect local scanner</b> and allow <b>local network access</b> when the
-                browser asks. Chrome and Edge work; Safari blocks this.
-              </li>
-            </ol>
-
-            {live.bridge && permission === "denied" && (
-              <div className="flex items-start gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-danger-light)] p-3 text-[var(--fs-danger)]">
-                <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                <p className="text-xs leading-relaxed">
-                  Local network access is blocked for this site. Allow Local network / Loopback
-                  access in the browser&apos;s site settings, then click Connect again.
-                </p>
-              </div>
-            )}
-
-            {live.bridge && permission === "prompt" && (!live.watching || live.error) && (
-              <p className="text-xs text-[var(--fs-success)]">
-                The browser will ask for local network access when you click Connect.
-              </p>
-            )}
-          </div>
-        </details>
-      </Card>
 
 
     </div>

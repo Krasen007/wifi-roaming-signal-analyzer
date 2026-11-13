@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, ChevronsUpDown, MapPin } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import type { AccessPoint, Band, Registry, RegistryEntry } from "../lib/types";
 import { quality } from "../lib/signal";
 import { registryValueSets } from "../lib/labels";
@@ -147,34 +147,6 @@ export function RegistryManager({
 
   return (
     <div className="space-y-4">
-      <Card tone="accent">
-        <div className="flex items-start gap-2.5">
-          <div className="rounded-lg bg-[var(--fs-primary)] p-2 text-white">
-            <MapPin className="h-4 w-4" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-[var(--fs-text)]">
-              Where are your access points?
-            </h2>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
-              Tell FloorScope which building and floor each access point is on. Once mapped, it can
-              warn you when you are connected to the wrong floor. All fields are free text — use the
-              names your team already uses.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-3 rounded-xl bg-[var(--fs-bg)] px-3 py-2.5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
-          <p>
-            Only the access points you fill in are checked for wrong-floor warnings. You do not
-            need to map every network in range.
-          </p>
-          <p className="mt-1.5 text-[var(--fs-text-muted)]">
-            Tip: stand next to an access point, run a scan, and the strongest row is that box.
-          </p>
-        </div>
-      </Card>
-
       <datalist id="floor-suggestions">
         {floorSuggestions.map((f) => (
           <option key={f} value={f} />
