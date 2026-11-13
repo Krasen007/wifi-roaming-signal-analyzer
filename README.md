@@ -56,8 +56,12 @@ When FloorScope is served as a static site (for example GitHub Pages), there is 
 server to read `scan.txt`. Open the deployed site, go to **Live setup**, and click
 **Download Windows scanner (.bat)**.
 
-Run `npm run build` — it writes the production site to the `docs/` folder automatically.
-Then commit/push `docs/` and point GitHub Pages at **Settings → Pages → branch `main`, folder `/docs`**.
+Push a commit to `main` to build and deploy the site automatically with GitHub Actions. The
+workflow runs `npm ci` and `npm run build`, then publishes the generated `docs/` output to
+GitHub Pages; you do not need to commit build files. Run `npm run build` locally when you want
+to verify the production build, but a local build alone does not publish it.
+
+For the one-time setup, open **Settings → Pages** and set the source to **GitHub Actions**.
 The build uses relative asset paths, so it works under the repository subpath without any
 environment variables. Local development continues to use `npm run dev`.
 

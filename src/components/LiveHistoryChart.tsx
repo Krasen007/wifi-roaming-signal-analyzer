@@ -154,14 +154,8 @@ export function LiveHistoryChart({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-base font-semibold text-[var(--fs-text)]">Signal over time</h2>
-          <p className="mt-1 text-sm text-[var(--fs-text-secondary)]">
-            The last {spanMin} minutes. Higher lines mean a stronger connection.
-          </p>
-          <h3 className="mt-2 text-xs font-semibold text-[var(--fs-text-secondary)]">
-            How to read this chart
-          </h3>
           <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[var(--fs-text-secondary)]">
-            Each line is one access point. A dotted gap means it went out of range, a red vertical
+            Higher lines mean a stronger connection. Each line is one access point. A dotted gap means it went out of range, a red vertical
             line is a disconnect, and an amber line is a roam to another access point. Select a line
             or a name below to highlight just that access point.
           </p>
