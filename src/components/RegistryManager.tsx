@@ -9,7 +9,7 @@ import { SignalBars } from "./SignalBars";
 import { Card } from "./ui/Card";
 import { cn } from "../utils/cn";
 
-type SortKey = "signal" | "device" | "bssid" | "ssid" | "band" | "building" | "floor" | "location";
+type SortKey = "signal" | "device" | "bssid" | "ssid" | "band" | "channel" | "building" | "floor" | "location";
 type SortDir = "asc" | "desc";
 type SortState = { key: SortKey; dir: SortDir };
 type Row = { bssid: string; ap?: AccessPoint; entry?: RegistryEntry };
@@ -32,6 +32,8 @@ function rowText(row: Row, key: SortKey): string {
       return row.entry?.location ?? "";
     case "band":
       return row.entry?.band ?? row.ap?.band ?? "";
+    case "channel":
+      return String(row.entry?.channel ?? row.ap?.channel ?? "");
     default:
       return "";
   }
@@ -93,6 +95,13 @@ export function RegistryManager({
         const ad = devNumber.get(a.bssid) ?? Number.MAX_SAFE_INTEGER;
         const bd = devNumber.get(b.bssid) ?? Number.MAX_SAFE_INTEGER;
         result = (ad - bd) * dir;
+      } else if (sort.key === "channel") {
+        const av = a.entry?.channel ?? a.ap?.channel ?? null;
+        const bv = b.entry?.channel ?? b.ap?.channel ?? null;
+        if (av == null && bv == null) result = 0;
+        else if (av == null) result = 1;
+        else if (bv == null) result = -1;
+        else result = (av - bv) * dir;
       } else {
         const av = rowText(a, sort.key).trim();
         const bv = rowText(b, sort.key).trim();
@@ -109,7 +118,7 @@ export function RegistryManager({
     const prev = registry[bssid] ?? { bssid, building: "", floor: "", location: "" };
     const next: RegistryEntry = { ...prev, ...patch, bssid };
     const r = { ...registry, [bssid]: next };
-    if (!next.building && !next.floor && !next.location && !next.band) delete r[bssid];
+    if (!next.building && !next.floor && !next.location && !next.band && next.channel == null) delete r[bssid];
     onChange(r);
   };
 
@@ -171,6 +180,7 @@ export function RegistryManager({
                 onSort={toggleSort}
               />
               <SortableTh label="Band" sortKey="band" sort={sort} onSort={toggleSort} />
+              <SortableTh label="Channel" sortKey="channel" sort={sort} onSort={toggleSort} />
               <SortableTh label="Wi-Fi name" sortKey="ssid" sort={sort} onSort={toggleSort} />
               <SortableTh label="Building" sortKey="building" sort={sort} onSort={toggleSort} />
               <SortableTh label="Floor" sortKey="floor" sort={sort} onSort={toggleSort} />
@@ -182,7 +192,7 @@ export function RegistryManager({
             {rows.length === 0 && (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={10}
                   className="px-4 py-8 text-center text-sm text-[var(--fs-text-secondary)]"
                 >
                   No access points yet. Import a scan first, or add one by ID below.
@@ -194,7 +204,8 @@ export function RegistryManager({
                 row.entry?.building ||
                 row.entry?.floor ||
                 row.entry?.location ||
-                row.entry?.band
+                row.entry?.band ||
+                row.entry?.channel != null
               );
               const isConnected = row.bssid === connectedBssid;
               const band: Band | undefined = row.entry?.band ?? row.ap?.band;
@@ -253,6 +264,9 @@ export function RegistryManager({
                   </td>
                   <td className="px-1 py-1" data-label="Band">
                     {band && <BandTag band={band} />}
+                  </td>
+                  <td className="px-1 py-1 text-[var(--fs-text-secondary)]" data-label="Channel">
+                    {row.entry?.channel ?? row.ap?.channel ?? "—"}
                   </td>
                   <td className="px-1 py-1 text-[var(--fs-text-secondary)]" data-label="Wi-Fi name">
                     {row.ap?.ssid ?? "—"}

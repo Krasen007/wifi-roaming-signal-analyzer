@@ -18,6 +18,7 @@ export interface RegistryEntry {
   floor: string; // free label e.g. "Ground", "1st", "2nd"
   location: string; // where the AP is in the building, e.g. "Hallway, 2nd floor"
   band?: Band; // last seen band (2.4 / 5 / 6 / ?) so offline entries still show it
+  channel?: number; // last seen channel so offline entries still show it
 }
 
 export type Registry = Record<string, RegistryEntry>;

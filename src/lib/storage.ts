@@ -54,12 +54,26 @@ export function loadRegistry(): Registry {
       typeof entry.band === "string" && VALID_BANDS.has(entry.band as Band)
         ? entry.band
         : undefined;
+    const channel =
+      typeof entry.channel === "number" &&
+      Number.isInteger(entry.channel) &&
+      entry.channel >= 1 &&
+      entry.channel <= 233
+        ? entry.channel
+        : undefined;
 
     const isBssid = /^([0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(bssid);
-    // Keep entries with location data or a remembered band, plus bare valid
-    // BSSIDs: those are rows the user added manually before filling them in.
-    if (building || floor || location || band || isBssid) {
-      registry[bssid] = { bssid, building, floor, location, ...(band ? { band } : {}) };
+    // Keep entries with location data or a remembered band/channel, plus bare
+    // valid BSSIDs: those are rows the user added manually before filling them in.
+    if (building || floor || location || band || channel != null || isBssid) {
+      registry[bssid] = {
+        bssid,
+        building,
+        floor,
+        location,
+        ...(band ? { band } : {}),
+        ...(channel != null ? { channel } : {}),
+      };
     }
   }
 
