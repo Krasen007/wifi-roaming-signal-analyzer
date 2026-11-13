@@ -9,7 +9,7 @@ import { SignalBars } from "./SignalBars";
 import { Card } from "./ui/Card";
 import { cn } from "../utils/cn";
 
-type SortKey = "signal" | "bssid" | "ssid" | "band" | "building" | "floor" | "location";
+type SortKey = "signal" | "device" | "bssid" | "ssid" | "band" | "building" | "floor" | "location";
 type SortDir = "asc" | "desc";
 type SortState = { key: SortKey; dir: SortDir };
 type Row = { bssid: string; ap?: AccessPoint; entry?: RegistryEntry };
@@ -60,6 +60,16 @@ export function RegistryManager({
     );
   };
 
+  const devices = useMemo(
+    () => groupDevices(aps, registry, connectedBssid),
+    [aps, registry, connectedBssid]
+  );
+  const devNumber = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const d of devices) for (const member of d.members) m.set(member.bssid, d.index);
+    return m;
+  }, [devices]);
+
   const rows = useMemo(() => {
     const map = new Map<string, Row>();
     for (const ap of aps) map.set(ap.bssid, { bssid: ap.bssid, ap });
@@ -79,6 +89,10 @@ export function RegistryManager({
         else if (ad == null) result = 1;
         else if (bd == null) result = -1;
         else result = (ad - bd) * dir;
+      } else if (sort.key === "device") {
+        const ad = devNumber.get(a.bssid) ?? Number.MAX_SAFE_INTEGER;
+        const bd = devNumber.get(b.bssid) ?? Number.MAX_SAFE_INTEGER;
+        result = (ad - bd) * dir;
       } else {
         const av = rowText(a, sort.key).trim();
         const bv = rowText(b, sort.key).trim();
@@ -89,17 +103,7 @@ export function RegistryManager({
       }
       return result || a.bssid.localeCompare(b.bssid);
     });
-  }, [aps, registry, sort]);
-
-  const devices = useMemo(
-    () => groupDevices(aps, registry, connectedBssid),
-    [aps, registry, connectedBssid]
-  );
-  const devNumber = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const d of devices) for (const member of d.members) m.set(member.bssid, d.index);
-    return m;
-  }, [devices]);
+  }, [aps, registry, sort, devNumber]);
 
   const update = (bssid: string, patch: Partial<RegistryEntry>) => {
     const prev = registry[bssid] ?? { bssid, building: "", floor: "", location: "" };
@@ -187,9 +191,7 @@ export function RegistryManager({
           <thead>
             <tr className="border-b border-[var(--fs-border)] bg-[var(--fs-bg-secondary)] text-left text-xs text-[var(--fs-text-secondary)]">
               <SortableTh label="Signal" sortKey="signal" sort={sort} onSort={toggleSort} />
-              <th className="px-1 py-1 font-medium text-left text-xs text-[var(--fs-text-secondary)]">
-                Device
-              </th>
+              <SortableTh label="Device" sortKey="device" sort={sort} onSort={toggleSort} />
               <SortableTh
                 label="Access point ID"
                 sortKey="bssid"
