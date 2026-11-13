@@ -146,6 +146,7 @@ export function Dashboard({
 
       <LiveHistoryChart
         history={history}
+        live={live}
         match={(bssid) => chartAllWifi || (lastSeenSsid[bssid] ?? "") === activeSsid}
         connectedBssid={connectedBssid}
         registry={registry}

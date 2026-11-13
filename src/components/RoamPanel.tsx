@@ -132,12 +132,11 @@ export function RoamPanel({
     tone === "good" ? CircleCheck : tone === "bad" ? TriangleAlert : tone === "warn" ? Zap : CircleHelp;
   const styles = VERDICT_STYLES[tone];
 
-  // Deliberately excludes dBm values and timestamps: identical strings produce
-  // no DOM mutation, so polling cannot re-announce the same verdict.
+  // Keep the live region focused on the verdict, not changing signal details.
   const statusMessage =
     live.watching && live.stale
-      ? `Scanner offline. Showing the last scan. ${title}. ${message} ${action}`
-      : `${title}. ${message} ${action}`;
+      ? `Scanner offline. Showing the last scan. ${title}. ${action}`
+      : `${title}. ${action}`;
 
   return (
     <Card className="lg:col-span-2">

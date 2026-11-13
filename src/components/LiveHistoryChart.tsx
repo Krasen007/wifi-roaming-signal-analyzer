@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
-import type { Band, History, Registry, RoamEvent, SamplePoint } from "../lib/types";
+import type { Band, History, LiveMeta, Registry, RoamEvent, SamplePoint } from "../lib/types";
 import { bssidDisplayName } from "../lib/labels";
 import { quality } from "../lib/signal";
 import { BandTag } from "./BandTag";
@@ -54,6 +53,7 @@ function splitSegments(pts: SamplePoint[]): Segments {
 
 export function LiveHistoryChart({
   history,
+  live,
   match,
   connectedBssid,
   registry,
@@ -66,6 +66,7 @@ export function LiveHistoryChart({
   onSelectChartScope,
 }: {
   history: History;
+  live: LiveMeta;
   match: (bssid: string) => boolean;
   connectedBssid: string;
   registry: Registry;
@@ -142,6 +143,10 @@ export function LiveHistoryChart({
     { dbm: Y_MIN, label: "Weak" },
   ];
   const spanMin = Math.round(span / 60000) || 1;
+  const timeTicks = Array.from(
+    { length: Math.max(0, Math.floor(spanMin / 5) - 1) },
+    (_, index) => (Math.floor(spanMin / 5) - index - 1) * 5
+  );
   const toggle = (bssid: string) => setFocus((f) => (f === bssid ? null : bssid));
 
   return (
@@ -151,6 +156,14 @@ export function LiveHistoryChart({
           <h2 className="text-base font-semibold text-[var(--fs-text)]">Signal over time</h2>
           <p className="mt-1 text-sm text-[var(--fs-text-secondary)]">
             The last {spanMin} minutes. Higher lines mean a stronger connection.
+          </p>
+          <h3 className="mt-2 text-xs font-semibold text-[var(--fs-text-secondary)]">
+            How to read this chart
+          </h3>
+          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[var(--fs-text-secondary)]">
+            Each line is one access point. A dotted gap means it went out of range, a red vertical
+            line is a disconnect, and an amber line is a roam to another access point. Select a line
+            or a name below to highlight just that access point.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -187,21 +200,6 @@ export function LiveHistoryChart({
         </div>
       </div>
 
-      <details className="group mt-2">
-        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-[var(--fs-text-secondary)] marker:hidden">
-          How to read this chart
-          <ChevronDown
-            className="h-3.5 w-3.5 transition-transform group-open:rotate-180"
-            aria-hidden="true"
-          />
-        </summary>
-        <p className="mt-1 max-w-2xl rounded-lg bg-[var(--fs-bg-secondary)] px-3 py-2 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
-          Each line is one access point. A dotted gap means it went out of range, a red vertical
-          line is a disconnect, and an amber line is a roam to another access point. Select a line
-          or a name below to highlight just that access point.
-        </p>
-      </details>
-
       <div ref={chartRef}>
         <svg viewBox={`0 0 ${W} ${H}`} className="mt-4 block w-full" style={{ height: H }}>
           {ticks.map(({ dbm, label }) => (
@@ -227,8 +225,34 @@ export function LiveHistoryChart({
               </text>
             </g>
           ))}
+          {timeTicks.map((minutes) => {
+            const tickX = x(xMax - minutes * 60_000);
+            return (
+              <g key={minutes}>
+                <line
+                  x1={tickX}
+                  x2={tickX}
+                  y1={PAD_T}
+                  y2={H - PAD_B}
+                  stroke="var(--fs-border)"
+                  strokeWidth={1}
+                  strokeDasharray="2 4"
+                  opacity={0.65}
+                />
+                <text
+                  x={tickX}
+                  y={H - 6}
+                  textAnchor="middle"
+                  fontSize={12}
+                  fill="var(--fs-text-muted)"
+                >
+                  -{minutes} min
+                </text>
+              </g>
+            );
+          })}
           <text x={W - PAD_R} y={H - 6} textAnchor="end" fontSize={12} fill="var(--fs-text-muted)">
-            now
+            {live.watching && live.stale ? "offline" : "now"}
           </text>
           <text x={PAD_L} y={H - 6} textAnchor="start" fontSize={12} fill="var(--fs-text-muted)">
             -{spanMin} min
@@ -251,7 +275,7 @@ export function LiveHistoryChart({
             const isFocused = focus === s.bssid;
             const dimmed = focus != null && !isFocused;
             const c = colorFor(s.bssid);
-            const width = isFocused ? 4 : isConn ? 3.5 : 2.2;
+            const width = isFocused ? 4.5 : isConn ? 4 : 2.8;
             const baseOpacity = dimmed ? 0.12 : 0.9;
             const lastSeg = s.segments.segs[s.segments.segs.length - 1];
             const lastPt = lastSeg?.[lastSeg.length - 1];
@@ -273,7 +297,7 @@ export function LiveHistoryChart({
                     x2={x(g.to.t)}
                     y2={y(g.to.dbm)}
                     stroke={c}
-                    strokeWidth={dimmed ? 1.2 : 1.8}
+                    strokeWidth={dimmed ? 1.4 : 2}
                     strokeDasharray="2 5"
                     strokeLinecap="round"
                     opacity={dimmed ? 0.1 : 0.5}

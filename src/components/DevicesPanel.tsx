@@ -64,10 +64,8 @@ export function DevicesPanel({
                     <span
                       className="shrink-0 rounded px-1.5 py-0.5 text-micro font-bold whitespace-nowrap"
                       style={{
-                        backgroundColor: dev.connected
-                          ? "var(--fs-primary)"
-                          : color.bg,
-                        color: dev.connected ? "var(--fs-bg)" : color.text,
+                        backgroundColor: color.bg,
+                        color: color.text,
                       }}
                     >
                       Unit {dev.index}
