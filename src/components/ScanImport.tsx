@@ -20,7 +20,6 @@ import type { LiveWatch } from "../lib/useLiveWatch";
 import { LIVE_STALE_MS, queryLoopbackPermission, type LoopbackPermission } from "../lib/live";
 import { downloadBridgeBat } from "../lib/bridgeBat";
 import { Card } from "./ui/Card";
-import { HowItWorks } from "./ui/HowItWorks";
 
 const LOOP_CMD =
   "while ($true) { $(netsh wlan show networks mode=bssid; netsh wlan show interfaces) | Out-File scan.txt -Encoding utf8; Start-Sleep 5 }";
@@ -91,8 +90,8 @@ export function ScanImport({
               Get live Wi-Fi readings
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
-              FloorScope reads a small text file that Windows refreshes every few seconds. Set it
-              up once, then walk around and watch the Overview tab.
+              FloorScope reads the scan file the loop writes to <b>scan.txt</b>. Start the loop,
+              then watch the Overview tab.
             </p>
           </div>
         </div>
@@ -142,7 +141,7 @@ export function ScanImport({
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--fs-success-light)] px-3 py-2.5">
             <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--fs-success)]">
               <Check className="h-3.5 w-3.5" aria-hidden="true" />
-              All set — readings are coming in. You can go back to the Overview.
+              Readings are coming in. Open the Overview tab.
             </p>
             <button
               type="button"
@@ -181,7 +180,7 @@ export function ScanImport({
           number={1}
           icon={Play}
           title="Start the scanner"
-          text="Open PowerShell in the FloorScope folder on this PC and paste the command below. Leave the window open while you walk."
+          text="Open PowerShell in this folder, paste the command below, and leave the window open while you walk."
         />
         <div className="mt-3 flex items-center gap-2">
           <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded-lg bg-slate-900 p-3 text-xs text-emerald-300">
@@ -196,8 +195,7 @@ export function ScanImport({
           </button>
         </div>
         <p className="mt-2 text-xs text-[var(--fs-text-secondary)]">
-          This updates <b>scan.txt</b> every 5 seconds with the nearby access points and the one you
-          are connected to. Stop it with Ctrl+C when you are done.
+          Writes <b>scan.txt</b> every 5 seconds. Stop with Ctrl+C when you are done.
         </p>
       </Card>
 
@@ -208,10 +206,10 @@ export function ScanImport({
           title="Turn on live reading"
           text={
             live.bridge
-              ? "This page was opened by the portable scanner. Click Connect below and allow local network access when the browser asks."
+              ? "Opened by the portable scanner. Click Connect and allow local network access when prompted."
               : live.auto
-                ? "The scanner was started by start-wifi.bat. FloorScope re-reads scan.txt automatically and updates Overview as soon as it changes."
-                : "Pick the scan.txt file the command is writing. FloorScope re-reads it whenever it changes and updates Overview automatically."
+                ? "Started by start-wifi.bat. FloorScope re-reads scan.txt as it changes."
+                : "Pick the scan.txt file the command is writing. FloorScope re-reads it as it changes."
           }
         />
 
@@ -309,7 +307,7 @@ export function ScanImport({
           number={3}
           icon={Upload}
           title="Or use a scan once"
-          text="Drop scan.txt anywhere on this card, or paste the output of “netsh wlan show networks mode=bssid” below. This is the fallback when live reading is not available."
+          text="Drop scan.txt here, or paste netsh output below. Fallback when live reading is not available."
         />
         <textarea
           value={text}
@@ -408,30 +406,7 @@ export function ScanImport({
         </details>
       </Card>
 
-      <HowItWorks>
-        <p>
-          This tab controls how FloorScope reads <b>scan.txt</b>. When you launch with{" "}
-          <b>start-wifi.bat</b>, the scanner and live reading are already running. On a hosted copy,
-          use the portable scanner above. Wired scanning has its own scanner in the Wired tab.
-        </p>
-        <div>
-          <p className="font-semibold text-[var(--fs-text)]">What the numbers mean</p>
-          <ul className="mt-1 list-disc space-y-1 pl-4">
-            <li>
-              <b>{aps.length}</b> access points: distinct Wi-Fi boxes seen in the latest scan, not
-              the number of scans.
-            </li>
-            <li>
-              <b>Last reading</b>: when a new scan was last read. If it stops changing, the scanner
-              window is no longer running.
-            </li>
-            <li>
-              The scanner writes a new file every <b>5 seconds</b>; FloorScope checks for changes
-              about every <b>1.2 seconds</b>.
-            </li>
-          </ul>
-        </div>
-      </HowItWorks>
+
     </div>
   );
 }

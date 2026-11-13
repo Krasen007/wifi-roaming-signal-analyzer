@@ -275,8 +275,7 @@ export default function App() {
       </main>
 
       <footer className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-[var(--fs-text-muted)]">
-        FloorScope runs entirely in your browser. Your scans and saved locations never leave this
-        computer.
+        Local only — nothing leaves this computer.
       </footer>
     </div>
   );

@@ -103,35 +103,29 @@ export function RoamPanel({
   const focusQuality = focusAp ? quality(focusAp.dbm) : null;
 
   let tone: VerdictTone = "neutral";
-  let title = "We can't tell which access point you're connected to";
-  let message =
-    "The scanner has not reported your current connection yet. Your Wi-Fi signal is still shown below.";
-  let action =
-    "Open Set up to check that the scanner also runs the interfaces command, or pick the access point manually under Details.";
+  let title = "Connection not detected";
+  let message = "The scanner hasn't reported your current access point yet.";
+  let action = "Start the scanner, or pick the access point manually under Details.";
   let signalDetail: string | null = null;
 
   if (wrongBuilding || wrongFloor) {
     tone = "bad";
-    title = `You look connected to the wrong ${wrongBuilding ? "building" : "floor"}`;
-    message = `You told us you're at ${userWhere}. The access point you're connected to${
-      connectedLoc ? ` is registered at ${connectedLoc}` : ""
-    }. This is the classic “full signal, wrong floor” problem.`;
-    action = "Walk a few steps until the connection changes, or turn Wi-Fi off and on to reconnect.";
+    title = `Connected to the wrong ${wrongBuilding ? "building" : "floor"}`;
+    message = `You're at ${userWhere}; the connected access point is registered at ${
+      connectedLoc ?? "an unknown location"
+    }.`;
+    action = "Turn Wi-Fi off and on to reconnect to a local access point.";
   } else if (stickyWarning) {
     tone = "warn";
     title = "A stronger access point is nearby";
-    message = `You're connected to ${connectedLoc ?? "a weaker access point"} with ${
-      focusQuality?.label.toLowerCase() ?? "weaker"
-    } signal, but ${strongestLoc ?? "another access point"} is much stronger.`;
+    message = `Connected to ${connectedLoc ?? "a weaker access point"} (${connected!.dbm} dBm), but ${strongestLoc ?? "another access point"} is stronger (${strongest!.dbm} dBm).`;
     signalDetail = `${connected!.dbm} dBm now vs ${strongest!.dbm} dBm nearby`;
-    action = "Turn Wi-Fi off and on to reconnect to the stronger access point.";
+    action = "Turn Wi-Fi off and on to roam to the stronger access point.";
   } else if (connected) {
     tone = "good";
-    title = "Your connection looks good";
-    message = `You're connected to ${
-      connectedLoc ?? bssidDisplayName(registry, connected.bssid)
-    }. No stronger access point is strong enough to cross the roaming threshold.`;
-    action = "Nothing to do — keep walking and the status will update automatically.";
+    title = "Connection looks good";
+    message = `Connected to ${connectedLoc ?? bssidDisplayName(registry, connected.bssid)}.`;
+    action = "Nothing to do.";
   }
 
   const VerdictIcon =
@@ -175,7 +169,6 @@ export function RoamPanel({
           <p className="mt-1 font-mono text-xs text-[var(--fs-text-secondary)]">{signalDetail}</p>
         )}
         <p className="mt-2.5 rounded-lg bg-[var(--fs-bg)] px-3 py-2 text-sm leading-relaxed text-[var(--fs-text)]">
-          <b>What to do: </b>
           {action}
         </p>
       </div>
@@ -198,14 +191,14 @@ export function RoamPanel({
         <Stat
           label="Your location"
           value={userWhere || "Not set"}
-          hint={userWhere ? "used for the floor check" : "add building / floor above"}
+          hint={userWhere ? "used for floor check" : "set building / floor"}
           icon={<MapPin className="h-4 w-4" aria-hidden="true" />}
         />
       </div>
 
       <details className="group mt-3 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-bg-secondary)]">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 text-sm font-medium text-[var(--fs-text)] marker:hidden">
-          Connection details and history
+          Details
           <ChevronDown
             className="h-4 w-4 shrink-0 text-[var(--fs-text-muted)] transition-transform group-open:rotate-180"
             aria-hidden="true"
@@ -234,11 +227,7 @@ export function RoamPanel({
               ))}
             </select>
             <p className="mt-1 text-xs text-[var(--fs-text-muted)]">
-              {live.watching && !live.stale
-                ? "Usually detected automatically while the scanner runs. You can correct it here."
-                : live.watching && live.stale
-                  ? "The scanner is offline. Showing the last detected access point; you can correct it here."
-                  : "Pick the access point manually when you are not running the live scanner."}
+              Detected automatically while scanning; correct it here if needed.
             </p>
           </div>
 

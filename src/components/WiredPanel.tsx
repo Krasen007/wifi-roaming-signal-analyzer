@@ -31,7 +31,6 @@ import type { WiredWatch } from "../lib/useWiredWatch";
 import { downloadBridgeBat } from "../lib/bridgeBat";
 import { cn } from "../utils/cn";
 import { Card } from "./ui/Card";
-import { HowItWorks } from "./ui/HowItWorks";
 
 export function WiredPanel({
   info,
@@ -787,12 +786,7 @@ export function WiredPanel({
         </div>
       </Card>
 
-      <HowItWorks>
-        <p>
-          The gateway MAC and its OUI tell you the router/switch vendor, but not which port you are
-          on. Only LLDP/CDP (or SNMP access to the switch) reveals the port.
-        </p>
-      </HowItWorks>
+
     </div>
   );
 }

@@ -75,7 +75,6 @@ export function DashboardControls({
           <span className="flex items-center gap-1 text-xs font-medium text-[var(--fs-text-secondary)]">
             <MapPin className="h-3 w-3" aria-hidden="true" />
             Where you are
-            <span className="font-normal text-[var(--fs-text-muted)]">(optional)</span>
           </span>
           <div className="flex flex-wrap items-center gap-2">
             <label htmlFor="dash-building-input" className="sr-only">
@@ -155,10 +154,7 @@ export function DashboardControls({
         </div>
       </div>
 
-      <p className="mt-2 text-xs leading-relaxed text-[var(--fs-text-muted)]">
-        Adding your building and floor is optional, but it lets FloorScope warn you when you are
-        attached to an access point on a different floor.
-      </p>
+
     </Card>
   );
 }

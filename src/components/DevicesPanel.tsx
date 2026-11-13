@@ -36,9 +36,7 @@ export function DevicesPanel({
               {connectedUnit
                 ? `You are connected to Unit ${connectedUnit.index}. `
                 : ""}
-              {multi.length > 0
-                ? `${multi.length} unit${multi.length > 1 ? "s share" : " shares"} one box across several network names.`
-                : "Each access point nearby is a separate box."}
+              {multi.length > 0 && `${multi.length} unit${multi.length > 1 ? "s share" : " shares"} one box across several network names.`}
             </span>
           </span>
           <ChevronDown

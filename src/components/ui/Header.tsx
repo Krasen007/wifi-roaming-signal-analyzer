@@ -19,33 +19,12 @@ type Tab = "dashboard" | "import" | "registry" | "wired";
 const TABS: {
   key: Tab;
   label: string;
-  description: string;
   icon: React.ComponentType<{ className?: string }>;
 }[] = [
-  {
-    key: "dashboard",
-    label: "Overview",
-    description: "Is my connection good?",
-    icon: LayoutDashboard,
-  },
-  {
-    key: "import",
-    label: "Set up",
-    description: "Start the Wi-Fi scanner",
-    icon: FileText,
-  },
-  {
-    key: "registry",
-    label: "Locations",
-    description: "Say where each access point is",
-    icon: Database,
-  },
-  {
-    key: "wired",
-    label: "Wired",
-    description: "Advanced Ethernet checks",
-    icon: Network,
-  },
+  { key: "dashboard", label: "Overview", icon: LayoutDashboard },
+  { key: "import", label: "Scanner", icon: FileText },
+  { key: "registry", label: "Locations", icon: Database },
+  { key: "wired", label: "Wired", icon: Network },
 ];
 
 interface HeaderProps {
@@ -59,7 +38,6 @@ interface HeaderProps {
 
 export function Header({ tab, setTab, live, format, watching, badges }: HeaderProps) {
   const [helpOpen, setHelpOpen] = useState(false);
-  const activeTab = TABS.find((item) => item.key === tab);
   const closeHelp = useCallback(() => setHelpOpen(false), []);
 
   return (
@@ -76,9 +54,7 @@ export function Header({ tab, setTab, live, format, watching, badges }: HeaderPr
                 <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--fs-text)]">
                   FloorScope
                 </h1>
-                <p className="truncate text-[var(--text-micro)] leading-none text-[var(--fs-text-muted)]">
-                  Wi-Fi roaming checker
-                </p>
+
               </div>
             </div>
 
@@ -97,7 +73,7 @@ export function Header({ tab, setTab, live, format, watching, badges }: HeaderPr
                     type="button"
                     onClick={() => setTab(item.key)}
                     aria-current={active ? "page" : undefined}
-                    aria-label={`${item.label} — ${item.description}`}
+                    aria-label={item.label}
                     className={cn(
                       "flex min-h-11 items-center gap-2 rounded-[var(--fs-radius-md)] px-3 text-sm font-medium transition-colors",
                       active
@@ -158,10 +134,10 @@ export function Header({ tab, setTab, live, format, watching, badges }: HeaderPr
                 type="button"
                 onClick={() => setHelpOpen(true)}
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--fs-radius-md)] border border-[var(--fs-border)] bg-[var(--fs-bg)] px-2.5 text-sm font-medium text-[var(--fs-text-secondary)] transition-colors hover:bg-[var(--fs-bg-tertiary)] hover:text-[var(--fs-text)]"
-                aria-label="Open help and glossary"
+                aria-label="About FloorScope"
               >
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden lg:inline">Help</span>
+                <span className="hidden lg:inline">About</span>
               </button>
               <ThemeToggle />
             </div>
@@ -180,16 +156,13 @@ export function Header({ tab, setTab, live, format, watching, badges }: HeaderPr
             >
               {TABS.map((item) => (
                 <option key={item.key} value={item.key}>
-                  {item.label} — {item.description}
+                  {item.label}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* One-line context so a non-technical user always knows where they are */}
-          <p className="mt-2 hidden text-xs text-[var(--fs-text-secondary)] lg:block">
-            {activeTab?.description}
-          </p>
+
         </div>
       </header>
 

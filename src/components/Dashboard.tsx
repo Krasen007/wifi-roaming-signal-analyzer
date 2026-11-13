@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, FileText, Radar, Route, Wifi } from "lucide-react";
+import { ArrowRight, Radar } from "lucide-react";
 import type { AccessPoint, Band, History, LiveMeta, Registry, RoamEvent } from "../lib/types";
 import { groupDevices } from "../lib/devices";
 import { registryValueSets } from "../lib/labels";
@@ -85,33 +85,11 @@ export function Dashboard({
           <Radar className="h-7 w-7" aria-hidden="true" />
         </div>
         <h2 className="mt-4 text-xl font-bold text-[var(--fs-text)]">
-          Let's find out where you're connected
+          No Wi-Fi readings yet
         </h2>
         <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-[var(--fs-text-secondary)]">
-          FloorScope needs a small scanner running on this PC. It reads the Wi-Fi list Windows
-          already shows — nothing is uploaded or sent anywhere.
+          Start the scanner on the Scanner tab, then come back here for the live connection check.
         </p>
-
-        <ol className="mx-auto mt-6 grid max-w-2xl gap-3 text-left sm:grid-cols-3">
-          <OnboardingStep
-            number={1}
-            icon={FileText}
-            title="Start the scanner"
-            text="Open Set up and run the Wi-Fi scanner."
-          />
-          <OnboardingStep
-            number={2}
-            icon={Route}
-            title="Walk around"
-            text="Keep the scanner window open while you move."
-          />
-          <OnboardingStep
-            number={3}
-            icon={Wifi}
-            title="Come back here"
-            text="Your live connection status appears automatically."
-          />
-        </ol>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <button
@@ -119,15 +97,10 @@ export function Dashboard({
             onClick={onOpenSetup}
             className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--fs-primary)] px-5 text-sm font-semibold text-white transition-colors hover:bg-[var(--fs-primary-hover)]"
           >
-            Set up the scanner
+            Open Scanner tab
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
-        <p className="mx-auto mt-3 max-w-md text-xs leading-relaxed text-[var(--fs-text-muted)]">
-          Using a hosted copy? Open the page launched by the scanner and choose{" "}
-          <b>Connect local scanner</b>. For a local install, make sure it is writing <b>scan.txt</b>,
-          then reload this page from the launcher.
-        </p>
       </Card>
     );
   }
@@ -202,30 +175,5 @@ export function Dashboard({
       />
       <OtherNetworks aps={aps} activeSsid={activeSsid} />
     </div>
-  );
-}
-
-function OnboardingStep({
-  number,
-  icon: Icon,
-  title,
-  text,
-}: {
-  number: number;
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  text: string;
-}) {
-  return (
-    <li className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-bg)] p-3">
-      <div className="flex items-center gap-2">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--fs-primary-light)] text-xs font-bold text-[var(--fs-primary)]">
-          {number}
-        </span>
-        <Icon className="h-4 w-4 text-[var(--fs-primary)]" aria-hidden="true" />
-        <span className="text-sm font-semibold text-[var(--fs-text)]">{title}</span>
-      </div>
-      <p className="mt-1.5 text-xs leading-relaxed text-[var(--fs-text-secondary)]">{text}</p>
-    </li>
   );
 }

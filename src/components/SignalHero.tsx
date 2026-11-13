@@ -51,14 +51,12 @@ export function SignalHero({ strongest, activeSsid, registry, isConnected = fals
           </p>
         </div>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-white/70">
-        Higher is better — walk around and watch this card change.
-      </p>
+
 
       <p className="mt-3 flex items-center gap-1.5 text-sm text-white/90">
         <MapPin className="h-4 w-4 shrink-0 text-white/60" aria-hidden="true" />
         <span className="truncate" title={loc ?? "Location not set"}>
-          {loc ?? "Location not set — add it in Locations"}
+          {loc ?? "Location not set"}
         </span>
       </p>
 

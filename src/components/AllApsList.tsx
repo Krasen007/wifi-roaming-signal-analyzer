@@ -35,9 +35,7 @@ export function AllApsList({
       <h2 className="text-sm font-semibold text-[var(--fs-text)]">
         Access points on “{activeSsid}” ({aps.length})
       </h2>
-      <p className="mt-1 text-xs text-[var(--fs-text-secondary)]">
-        Same network name, different physical boxes — strongest first.
-      </p>
+
       <div className="mt-4 divide-y divide-[var(--fs-border)]">
         {aps.map((a, i) => {
           const fl = floorOf(a.bssid);
@@ -82,7 +80,7 @@ export function AllApsList({
                       }}
                     >
                       Unit {devIdx}
-                      <span className="sr-only"> - shares hardware with other networks</span>
+
                     </span>
                   )}
                   {isBest && (

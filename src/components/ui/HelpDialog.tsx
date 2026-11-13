@@ -1,76 +1,12 @@
 import { useEffect, useRef } from "react";
-import {
-  ArrowLeftRight,
-  BookOpen,
-  Building2,
-  Cable,
-  Layers,
-  Magnet,
-  Radio,
-  ShieldCheck,
-  Signal,
-  Wifi,
-  X,
-} from "lucide-react";
+import { ShieldCheck, X } from "lucide-react";
 
 interface HelpDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
-const TERMS: {
-  icon: React.ComponentType<{ className?: string }>;
-  term: string;
-  plain: string;
-}[] = [
-  {
-    icon: Wifi,
-    term: "Network name (SSID)",
-    plain: "The Wi-Fi name Windows shows you, for example “Office-WiFi”.",
-  },
-  {
-    icon: Radio,
-    term: "Access point (AP)",
-    plain:
-      "The box on the ceiling or wall that broadcasts Wi-Fi. A large building usually has many of them.",
-  },
-  {
-    icon: Layers,
-    term: "BSSID",
-    plain:
-      "An access point's unique ID. It looks like 72:47:32:fa:c4:1f. Two access points never share one.",
-  },
-  {
-    icon: Signal,
-    term: "Signal strength (dBm)",
-    plain:
-      "How loud the access point is. Closer to 0 is better: -50 is excellent, -70 is fair, -85 is poor.",
-  },
-  {
-    icon: ArrowLeftRight,
-    term: "Roaming",
-    plain:
-      "Your device switching from one access point to another as you walk. Good roaming happens before the signal gets weak.",
-  },
-  {
-    icon: Magnet,
-    term: "Sticky connection",
-    plain:
-      "Your device keeps holding a weak access point even though a much stronger one is nearby.",
-  },
-  {
-    icon: Building2,
-    term: "Wrong floor",
-    plain:
-      "You are on one floor but connected to an access point registered on a different floor.",
-  },
-  {
-    icon: Cable,
-    term: "Wired network (LLDP)",
-    plain:
-      "Optional mode for Ethernet cables. LLDP is a message from network switches that can name the exact switch and port you are plugged into.",
-  },
-];
+
 
 export function HelpDialog({ open, onClose }: HelpDialogProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -156,7 +92,7 @@ export function HelpDialog({ open, onClose }: HelpDialogProps) {
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[var(--fs-border)] bg-[var(--fs-bg)] px-5 py-4">
           <div className="flex items-start gap-3">
             <span className="rounded-xl bg-[var(--fs-primary-light)] p-2 text-[var(--fs-primary)]">
-              <BookOpen className="h-5 w-5" aria-hidden="true" />
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
               <h2 id="help-title" className="text-base font-semibold text-[var(--fs-text)]">
@@ -192,47 +128,9 @@ export function HelpDialog({ open, onClose }: HelpDialogProps) {
             </p>
           </section>
 
-          <section aria-labelledby="help-steps">
-            <h3 id="help-steps" className="text-sm font-semibold text-[var(--fs-text)]">
-              Start in three steps
-            </h3>
-            <ol className="mt-2 space-y-2">
-              {[
-                "Open Get started and run the small scanner for Wi-Fi (or wired).",
-                "Walk around the building while the scanner keeps running.",
-                "Open Overview and look at the big status card — it tells you if anything needs fixing.",
-              ].map((step, index) => (
-                <li key={step} className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--fs-primary)] text-xs font-bold text-white">
-                    {index + 1}
-                  </span>
-                  <span className="leading-relaxed">{step}</span>
-                </li>
-              ))}
-            </ol>
-          </section>
 
-          <section aria-labelledby="help-terms">
-            <h3 id="help-terms" className="text-sm font-semibold text-[var(--fs-text)]">
-              Words you will see
-            </h3>
-            <dl className="mt-2 grid gap-2 sm:grid-cols-2">
-              {TERMS.map(({ icon: Icon, term, plain }) => (
-                <div
-                  key={term}
-                  className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-bg-secondary)] p-3"
-                >
-                  <dt className="flex items-center gap-2 text-xs font-semibold text-[var(--fs-text)]">
-                    <Icon className="h-3.5 w-3.5 shrink-0 text-[var(--fs-primary)]" aria-hidden="true" />
-                    {term}
-                  </dt>
-                  <dd className="mt-1 text-xs leading-relaxed text-[var(--fs-text-secondary)]">
-                    {plain}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </section>
+
+
 
           <section
             aria-labelledby="help-privacy"
@@ -256,7 +154,7 @@ export function HelpDialog({ open, onClose }: HelpDialogProps) {
               onClick={onClose}
               className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--fs-primary-action)] px-5 text-sm font-semibold text-white hover:bg-[var(--fs-primary-action-hover)]"
             >
-              Got it
+              Close
             </button>
           </div>
         </div>

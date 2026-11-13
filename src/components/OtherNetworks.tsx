@@ -23,9 +23,7 @@ export function OtherNetworks({ aps, activeSsid }: OtherNetworksProps) {
             <span className="block text-sm font-semibold text-[var(--fs-text)]">
               Other Wi-Fi networks nearby ({otherAps.length})
             </span>
-            <span className="mt-0.5 block text-xs text-[var(--fs-text-secondary)]">
-              Networks you are not analysing right now.
-            </span>
+
           </span>
           <ChevronDown
             className="h-4 w-4 shrink-0 text-[var(--fs-text-muted)] transition-transform group-open:rotate-180"
